@@ -1,0 +1,151 @@
+import React, { createContext, useContext, useEffect, useState } from 'react';
+import { supabase } from '@/shared/api/supabase';
+
+interface TenantContextType {
+  tenantId: string | null;
+  tenantName: string | null;
+  ownerName: string | null;
+  subscriptionEndsAt: string | null;
+  isLoading: boolean;
+  error: string | null;
+  setOwnerName: (name: string) => void;
+}
+
+const TenantContext = createContext<TenantContextType>({
+  tenantId: null,
+  tenantName: null,
+  ownerName: null,
+  subscriptionEndsAt: null,
+  isLoading: true,
+  error: null,
+  setOwnerName: () => {},
+});
+
+export const TenantProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const [tenantId, setTenantId] = useState<string | null>(null);
+  const [tenantName, setTenantName] = useState<string | null>(null);
+  const [ownerName, setOwnerName] = useState<string | null>(null);
+  const [subscriptionEndsAt, setSubscriptionEndsAt] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [isExpired, setIsExpired] = useState(false);
+
+  useEffect(() => {
+    const resolveTenant = async () => {
+      try {
+        const hostname = window.location.hostname;
+        
+        // Localhost dev test
+        let subdomain = 'demo'; 
+        
+        const urlParams = new URLSearchParams(window.location.search);
+        const queryTenant = urlParams.get('tenant');
+
+        if (hostname !== 'localhost' && hostname !== '127.0.0.1') {
+          if (queryTenant) {
+            subdomain = queryTenant;
+          } else if (hostname.includes('pages.dev')) {
+             subdomain = 'demo';
+          } else if (hostname.includes('beaveresiye.com')) {
+             const parts = hostname.split('.');
+             subdomain = parts[0] === 'www' ? parts[1] : parts[0];
+          } else {
+             // Custom domain handling logic
+             subdomain = hostname;
+          }
+        }
+
+        // Query Supabase for the tenant
+        let query = supabase.from('tenants').select('id, name, owner_name, subscription_ends_at');
+        
+        if (hostname.includes('beaveresiye.com') || hostname === 'localhost' || hostname.includes('pages.dev')) {
+           query = query.eq('subdomain', subdomain);
+        } else {
+           query = query.eq('custom_domain', subdomain);
+        }
+
+        const { data, error: sbError } = await query.single();
+
+        if (sbError || !data) {
+          setError('İşletme bulunamadı veya sistemde aktif değil.');
+        } else {
+          setTenantId(data.id);
+          setTenantName(data.name);
+          setOwnerName(data.owner_name || null);
+          setSubscriptionEndsAt(data.subscription_ends_at);
+          
+          if (data.subscription_ends_at) {
+            const endsAt = new Date(data.subscription_ends_at);
+            if (endsAt < new Date()) {
+              setIsExpired(true);
+            }
+          }
+          
+          // Optionally update document title
+          document.title = `${data.name} | BeaVeresiye`;
+        }
+      } catch (err) {
+        setError('Bağlantı hatası oluştu.');
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    resolveTenant();
+  }, []);
+
+  if (isLoading) {
+    return (
+      <div className="flex h-screen w-screen items-center justify-center bg-system-bg text-text-secondary">
+        <div className="flex flex-col items-center space-y-4">
+          <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent"></div>
+          <p className="font-subhead">İşletme yükleniyor...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (error || !tenantId) {
+    return (
+      <div className="flex h-screen w-screen items-center justify-center bg-system-bg p-6 text-center">
+        <div className="rounded-ios-lg bg-system-surface p-6 shadow-ios-card">
+          <h2 className="mb-2 font-headline text-danger">Hata</h2>
+          <p className="font-body text-text-secondary">{error}</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (isExpired) {
+    return (
+      <div className="flex h-screen w-screen flex-col items-center justify-center bg-system-bg p-6 text-center">
+        <div className="rounded-2xl bg-white p-8 max-w-sm w-full border border-danger/20 shadow-lg">
+          <div className="mx-auto w-16 h-16 rounded-full bg-danger/10 flex items-center justify-center mb-6">
+            <svg className="w-8 h-8 text-danger" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+            </svg>
+          </div>
+          <h2 className="mb-2 font-large-title text-danger">Süreniz Doldu</h2>
+          <p className="font-subhead text-text-secondary mb-6">Abonelik süreniz sona ermiştir. Sistemi kullanmaya devam etmek için lütfen yöneticiyle iletişime geçerek sürenizi uzatın.</p>
+          <button 
+            onClick={() => window.open(`https://wa.me/905000000000?text=${encodeURIComponent(`Merhaba, ${tenantName} işletmesi için BeaVeresiye aboneliğimi uzatmak istiyorum.`)}`, '_blank')}
+            className="w-full bg-[#25D366] text-white py-3 rounded-xl font-headline flex justify-center items-center gap-2 hover:bg-[#128C7E] transition-colors"
+          >
+            <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+              <path d="M.057 24l1.687-6.163c-1.041-1.804-1.588-3.849-1.587-5.946.003-6.556 5.338-11.891 11.893-11.891 3.181.001 6.167 1.24 8.413 3.488 2.245 2.248 3.481 5.236 3.48 8.414-.003 6.557-5.338 11.892-11.893 11.892-1.99-.001-3.951-.5-5.688-1.448l-6.305 1.654zm6.597-3.807c1.676.995 3.276 1.591 5.392 1.592 5.448 0 9.886-4.434 9.889-9.885.002-5.462-4.415-9.89-9.881-9.892-5.452 0-9.887 4.434-9.889 9.884-.001 2.225.651 3.891 1.746 5.634l-.999 3.648 3.742-.981zm11.387-5.464c-.074-.124-.272-.198-.57-.347-.297-.149-1.758-.868-2.031-.967-.272-.099-.47-.149-.669.149-.198.297-.768.967-.941 1.165-.173.198-.347.223-.644.074-.297-.149-1.255-.462-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.297-.347.446-.521.151-.172.2-.296.3-.495.099-.198.05-.372-.025-.521-.075-.148-.669-1.611-.916-2.206-.242-.579-.487-.501-.669-.51l-.57-.01c-.198 0-.52.074-.792.347-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.876 1.213 3.074.149.198 2.095 3.2 5.076 4.487.709.306 1.263.489 1.694.626.712.226 1.36.194 1.872.118.571-.085 1.758-.719 2.006-1.413.248-.695.248-1.29.173-1.414z" />
+            </svg>
+            WhatsApp'tan Ulaşın
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <TenantContext.Provider value={{ tenantId, tenantName, ownerName, subscriptionEndsAt, isLoading, error, setOwnerName }}>
+      {children}
+    </TenantContext.Provider>
+  );
+};
+
+export const useTenant = () => useContext(TenantContext);
