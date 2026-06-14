@@ -1,9 +1,9 @@
 import { toast } from 'react-hot-toast';
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { supabase } from '@/shared/api/supabase';
 import { useAuth } from '@/app/providers/AuthProvider';
 import { useTenant } from '@/app/providers/TenantProvider';
-import { User, Store, Shield, Bell, LogOut, ChevronRight, MessageSquareWarning, Send, Download, Loader2, Edit2 } from 'lucide-react';
+import { User, Store, Shield, Bell, LogOut, ChevronRight, MessageSquareWarning, Send, Download, Loader2, Edit2, CreditCard } from 'lucide-react';
 import { Button } from '@/shared/ui/Button';
 import { BottomSheet } from '@/shared/ui/BottomSheet';
 import { sendSMS } from '@/shared/lib/netgsm';
@@ -15,24 +15,10 @@ import * as XLSX from 'xlsx';
 
 export const Settings = () => {
   const { user, signOut } = useAuth();
-  const { tenantId, tenantName, ownerName, setOwnerName, subscriptionEndsAt } = useTenant();
+  const { tenantId, tenantName, ownerName, setOwnerName, planType } = useTenant();
   const navigate = useNavigate();
   
   const { settings, isLoading, updateSettings } = useSettings(tenantId);
-
-  const calculateRemainingTime = () => {
-    if (!subscriptionEndsAt) return 'Calculating...';
-    const end = new Date(subscriptionEndsAt);
-    const now = new Date();
-    const diff = end.getTime() - now.getTime();
-    
-    if (diff <= 0) return 'Süresi Doldu';
-    
-    const days = Math.floor(diff / (1000 * 60 * 60 * 24));
-    const hours = Math.floor((diff / (1000 * 60 * 60)) % 24);
-    
-    return `${days} Gün ${hours} Saat Kaldı`;
-  };
 
   const [isAutoSmsModalOpen, setIsAutoSmsModalOpen] = useState(false);
   const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
@@ -58,6 +44,12 @@ export const Settings = () => {
   };
 
   const openAutoSmsModal = () => {
+    if (planType === 'free') {
+      toast('Otomatik Hatırlatmalar özelliği Pro Pakete özeldir. Çok yakında yükseltme seçeneği eklenecek! 💎', {
+        icon: '🚀'
+      });
+      return;
+    }
     fetchOverdueCustomers();
     setIsAutoSmsModalOpen(true);
   };
@@ -93,7 +85,7 @@ export const Settings = () => {
     }
 
     await updateSettings.mutateAsync({ sms_credits: (settings.sms_credits || 0) - successCount });
-    toast.error(`${successCount} SMS başarıyla gönderildi.`);
+    toast.success(`${successCount} SMS başarıyla gönderildi.`);
   };
 
   const handleExportData = async () => {
@@ -152,9 +144,9 @@ export const Settings = () => {
     if (!newProfileName.trim() || !tenantId) return;
     setIsUpdatingProfile(true);
     try {
-      const { error } = await supabase.from('tenants').update({
-        owner_name: newProfileName.trim()
-      }).eq('id', tenantId);
+      const { error } = await supabase.auth.updateUser({
+        data: { full_name: newProfileName.trim(), name: newProfileName.trim() }
+      });
 
       if (error) throw error;
       toast.success('Profil bilgileriniz güncellendi.');
@@ -168,153 +160,174 @@ export const Settings = () => {
     }
   };
 
+  const handleProFeatureClick = (originalOnClick: () => void) => {
+    if (planType === 'free') {
+      toast('SMS ve Hatırlatma özellikleri Pro Pakete özeldir! 💎', {
+        icon: '🚀'
+      });
+      return;
+    }
+    originalOnClick();
+  };
+
+  const SettingsMenuItem = ({ icon: Icon, title, subtitle, onClick, value, disabled, isPro }: any) => (
+    <button 
+      onClick={onClick} 
+      disabled={disabled}
+      className={`w-full flex items-center p-4 hover:bg-gray-50 active:bg-gray-100 transition-colors group ${disabled ? 'opacity-50 cursor-not-allowed' : ''}`}
+    >
+      <div className={`flex items-center justify-center mr-4 ${isPro && planType === 'free' ? 'text-gray-300' : 'text-gray-500'}`}>
+        <Icon className="h-6 w-6" />
+      </div>
+      <div className="flex-1 text-left">
+        <div className="flex items-center gap-2">
+          <p className={`font-semibold ${isPro && planType === 'free' ? 'text-gray-400' : 'text-gray-900'}`}>{title}</p>
+          {isPro && (
+            <span className="inline-flex items-center rounded bg-amber-100 px-1.5 py-0.5 text-[10px] font-bold text-amber-800 uppercase">PRO</span>
+          )}
+        </div>
+        {subtitle && <p className={`text-xs mt-0.5 ${isPro && planType === 'free' ? 'text-gray-400' : 'text-gray-500'}`}>{subtitle}</p>}
+      </div>
+      {value ? (
+        <span className={`text-sm font-medium mr-2 ${isPro && planType === 'free' ? 'text-gray-400' : 'text-gray-700'}`}>{value}</span>
+      ) : null}
+      <ChevronRight className={`h-5 w-5 transition-colors ${isPro && planType === 'free' ? 'text-gray-200' : 'text-gray-300 group-hover:text-gray-500'}`} />
+    </button>
+  );
+
   return (
     <div className="flex flex-col gap-6 w-full pb-10">
-      <Header title="Ayarlar" subtitle="Uygulama tercihlerinizi yönetin" />
-      <div className="flex flex-col gap-6 max-w-3xl mx-auto w-full">
+      <Header title="Ayarlar" subtitle="Profil, işletme ve abonelik" />
+      
+      <div className="flex flex-col gap-6 max-w-3xl mx-auto w-full px-4 sm:px-0">
 
-      <div className="space-y-8">
-        
-        {/* Profile Header & License Banner */}
-        <section className="space-y-4">
-          <div className="bg-gradient-to-br from-primary/90 to-primary text-white rounded-3xl p-6 shadow-xl shadow-primary/20 relative overflow-hidden">
-            {/* Decorative BG */}
-            <div className="absolute -top-10 -right-10 w-40 h-40 bg-white opacity-10 rounded-full blur-3xl"></div>
-            <div className="absolute -bottom-10 -left-10 w-40 h-40 bg-black opacity-10 rounded-full blur-3xl"></div>
-            
-            <div className="flex items-center gap-5 relative z-10">
-              <div className="h-16 w-16 rounded-2xl bg-white/20 backdrop-blur-md flex items-center justify-center text-white border border-white/30 shadow-inner">
-                <Store className="h-8 w-8" />
-              </div>
-              <div className="flex-1">
-                <div className="flex items-center justify-between">
-                  <h2 className="text-2xl font-black tracking-tight">{tenantName}</h2>
-                  {user?.type === 'owner' && (
-                    <button onClick={() => { setNewProfileName(ownerName || user?.name || ''); setIsProfileModalOpen(true); }} className="p-2 bg-white/10 hover:bg-white/20 rounded-xl transition-colors backdrop-blur-sm">
-                      <Edit2 className="w-4 h-4" />
-                    </button>
-                  )}
-                </div>
-                <div className="flex items-center gap-2 mt-1 opacity-80 text-sm font-medium">
-                  <User className="h-4 w-4" />
-                  <span>{user?.type === 'owner' ? (ownerName ? `${ownerName} (${user?.email})` : user?.email) : (user?.name || 'Personel')} ({user?.type === 'owner' ? 'Mağaza Sahibi' : 'Personel'})</span>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {user?.type === 'owner' && (
-            <div className="bg-gradient-to-r from-orange-500 to-amber-500 rounded-2xl p-4 shadow-lg shadow-orange-500/20 flex items-center justify-between text-white">
-              <div className="flex items-center gap-3">
-                <div className="bg-white/20 p-2 rounded-xl backdrop-blur-sm">
-                  <Shield className="h-6 w-6" />
+        {/* Profil Section */}
+        <section>
+          <h3 className="text-sm font-semibold text-gray-500 uppercase tracking-wider mb-2 px-1">Hesap</h3>
+          <Card padding="none" className="overflow-hidden divide-y divide-gray-100">
+            <div className="p-4 flex items-center justify-between">
+              <div className="flex items-center gap-4">
+                <div className="h-14 w-14 rounded-full bg-primary/10 flex items-center justify-center text-primary font-bold text-xl">
+                  {user?.type === 'owner' ? (ownerName?.charAt(0)?.toUpperCase() || 'O') : (user?.name?.charAt(0)?.toUpperCase() || 'P')}
                 </div>
                 <div>
-                  <p className="text-xs font-bold uppercase tracking-wider opacity-80 mb-0.5">Lisans Süresi</p>
-                  <p className="font-extrabold text-lg">{calculateRemainingTime()}</p>
+                  <h2 className="text-lg font-bold text-gray-900">
+                    {user?.type === 'owner' ? ownerName || 'İsimsiz Kullanıcı' : user?.name || 'Personel'}
+                  </h2>
+                  <p className="text-sm text-gray-500">{user?.email || 'Telefon İle Giriş'}</p>
                 </div>
               </div>
+              <div className="text-right">
+                <span className="inline-flex items-center rounded-full bg-gray-100 px-2.5 py-0.5 text-xs font-medium text-gray-800">
+                  {user?.type === 'owner' ? 'Yönetici' : 'Personel'}
+                </span>
+              </div>
             </div>
-          )}
+            
+            {user?.type === 'owner' && (
+              <SettingsMenuItem 
+                icon={Edit2} 
+                title="Profili Düzenle" 
+                onClick={() => { setNewProfileName(ownerName || user?.name || ''); setIsProfileModalOpen(true); }} 
+              />
+            )}
+          </Card>
         </section>
 
         {user?.type === 'owner' && (
           <>
+            {/* Abonelik ve Kullanım Section */}
             <section>
-              <h3 className="text-[13px] font-bold text-gray-400 uppercase tracking-widest ml-4 mb-3">Sistem Yönetimi</h3>
-              <div className="bg-white rounded-3xl border border-gray-100 shadow-sm overflow-hidden divide-y divide-gray-50">
-                
-                <button onClick={() => navigate('/settings/employees')} className="w-full flex items-center p-5 hover:bg-gray-50/80 active:bg-gray-100 transition-colors group">
-                  <div className="h-12 w-12 rounded-2xl bg-cyan-50 flex items-center justify-center text-cyan-600 mr-4 group-hover:scale-105 transition-transform border border-cyan-100/50">
-                    <User className="h-6 w-6" />
-                  </div>
-                  <div className="flex-1 text-left">
-                    <p className="font-bold text-[15px] text-gray-900">Personel ve Rol Yönetimi</p>
-                    <p className="text-xs font-medium text-gray-500 mt-0.5">Kasiyer hesaplarını ekle, düzenle veya kaldır</p>
-                  </div>
-                  <ChevronRight className="h-5 w-5 text-gray-300 group-hover:text-cyan-500 transition-colors" />
-                </button>
-
-                <button onClick={handleExportData} disabled={isExporting} className={`w-full flex items-center p-5 hover:bg-gray-50/80 active:bg-gray-100 transition-colors group ${isExporting ? 'opacity-50 cursor-not-allowed' : ''}`}>
-                  <div className="h-12 w-12 rounded-2xl bg-green-50 flex items-center justify-center text-green-600 mr-4 group-hover:scale-105 transition-transform border border-green-100/50">
-                    {isExporting ? <Loader2 className="h-6 w-6 animate-spin" /> : <Download className="h-6 w-6" />}
-                  </div>
-                  <div className="flex-1 text-left">
-                    <p className="font-bold text-[15px] text-gray-900">{isExporting ? 'Dışa Aktarılıyor...' : 'Verileri Dışa Aktar'}</p>
-                    <p className="text-xs font-medium text-gray-500 mt-0.5">Tüm hareketleri ve ürünleri Excel'e indir</p>
-                  </div>
-                  <ChevronRight className="h-5 w-5 text-gray-300 group-hover:text-green-500 transition-colors" />
-                </button>
-              </div>
+              <h3 className="text-sm font-semibold text-gray-500 uppercase tracking-wider mb-2 px-1">Abonelik Yönetimi</h3>
+              <Card padding="none" className="overflow-hidden divide-y divide-gray-100">
+                <SettingsMenuItem 
+                  icon={CreditCard} 
+                  title="Mevcut Plan" 
+                  value={planType === 'pro' ? 'Pro Paket' : 'Ücretsiz Plan'}
+                  onClick={() => toast('Yakında paket yükseltme özelliği eklenecektir.')} 
+                />
+              </Card>
             </section>
 
+            {/* SMS Yönetimi Section */}
             <section>
-              <h3 className="text-[13px] font-bold text-gray-400 uppercase tracking-widest ml-4 mb-3">SMS & Hatırlatmalar</h3>
-              <div className="bg-white rounded-3xl border border-gray-100 shadow-sm overflow-hidden divide-y divide-gray-50">
-                
-                <button onClick={openAutoSmsModal} className="w-full flex items-center p-5 hover:bg-gray-50/80 active:bg-gray-100 transition-colors group">
-                  <div className="h-12 w-12 rounded-2xl bg-indigo-50 flex items-center justify-center text-indigo-600 mr-4 group-hover:scale-105 transition-transform border border-indigo-100/50">
-                    <Bell className="h-6 w-6" />
-                  </div>
-                  <div className="flex-1 text-left">
-                    <p className="font-bold text-[15px] text-gray-900">Otomatik Hatırlatmalar</p>
-                    <p className="text-xs font-medium text-gray-500 mt-0.5">Geciken ödemeler için otomatik SMS gönderimi</p>
-                  </div>
-                  <div className="flex items-center gap-3">
-                    <span className={`text-[11px] font-extrabold uppercase px-2 py-1 rounded-md ${settings?.auto_sms_enabled ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500'}`}>
-                      {settings?.auto_sms_enabled ? 'Açık' : 'Kapalı'}
-                    </span>
-                    <ChevronRight className="h-5 w-5 text-gray-300 group-hover:text-indigo-500 transition-colors" />
-                  </div>
-                </button>
+              <h3 className="text-sm font-semibold text-gray-500 uppercase tracking-wider mb-2 px-1">SMS & Hatırlatmalar</h3>
+              <Card padding="none" className="overflow-hidden divide-y divide-gray-100">
+                <SettingsMenuItem 
+                  icon={Bell} 
+                  title="Otomatik Hatırlatmalar" 
+                  subtitle="Geciken borçlar için otomatik SMS"
+                  value={planType === 'pro' ? (settings?.auto_sms_enabled ? 'Açık' : 'Kapalı') : '-'}
+                  isPro={true}
+                  onClick={() => handleProFeatureClick(openAutoSmsModal)} 
+                />
+                <SettingsMenuItem 
+                  icon={MessageSquareWarning} 
+                  title="SMS Bakiyesi" 
+                  subtitle="Hatırlatma mesajları için kredi"
+                  value={planType === 'pro' ? (isLoading ? '...' : `${settings?.sms_credits || 0} Kredi`) : '-'}
+                  isPro={true}
+                  onClick={() => handleProFeatureClick(handleBuyCredits)} 
+                />
+              </Card>
+            </section>
 
-                <div className="p-5 flex flex-col sm:flex-row items-center justify-between gap-4 bg-gray-50/30">
-                  <div className="flex items-center w-full sm:w-auto">
-                    <div className="h-12 w-12 rounded-2xl bg-orange-50 flex items-center justify-center text-orange-600 mr-4 border border-orange-100/50">
-                      <MessageSquareWarning className="h-6 w-6" />
-                    </div>
-                    <div className="text-left">
-                      <p className="font-bold text-[15px] text-gray-900">SMS Bakiyesi</p>
-                      <p className="text-xs font-medium text-gray-500 mt-0.5">Hatırlatmalar için kredi</p>
-                    </div>
+            {/* İşletme Yönetimi Section */}
+            <section>
+              <h3 className="text-sm font-semibold text-gray-500 uppercase tracking-wider mb-2 px-1">İşletme Yönetimi</h3>
+              <Card padding="none" className="overflow-hidden divide-y divide-gray-100">
+                <div className="p-4 flex items-center gap-4 bg-gray-50/50">
+                  <div className="h-10 w-10 rounded-lg bg-white border border-gray-200 flex items-center justify-center text-gray-600">
+                    <Store className="h-5 w-5" />
                   </div>
-                  
-                  <div className="flex items-center gap-4 bg-white px-5 py-3 rounded-2xl border border-gray-200 shadow-sm w-full sm:w-auto justify-between">
-                    <p className="text-2xl font-black text-gray-900">{isLoading ? '...' : (settings?.sms_credits || 0)} <span className="text-sm font-medium text-gray-400">kredi</span></p>
-                    <Button size="sm" variant="primary" onClick={handleBuyCredits} className="rounded-xl px-5 font-bold shadow-md shadow-primary/20 hover:shadow-lg hover:shadow-primary/30">
-                      Satın Al
-                    </Button>
+                  <div>
+                    <h2 className="text-base font-bold text-gray-900">{tenantName}</h2>
+                    <p className="text-xs text-gray-500">Mevcut İşletme</p>
                   </div>
                 </div>
-              </div>
+                <SettingsMenuItem 
+                  icon={User} 
+                  title="Personel Yönetimi" 
+                  subtitle="Yetki sınırlarını ve kasiyerleri düzenle"
+                  onClick={() => navigate('/settings/employees')} 
+                />
+                <SettingsMenuItem 
+                  icon={isExporting ? Loader2 : Download} 
+                  title={isExporting ? 'Aktarılıyor...' : 'Verileri Dışa Aktar'} 
+                  subtitle="Tüm verileri Excel olarak indir"
+                  disabled={isExporting}
+                  onClick={handleExportData} 
+                />
+              </Card>
             </section>
           </>
         )}
 
-        <section className="pt-4">
+        {/* Çıkış Yap Section */}
+        <section className="pt-2">
           <button 
             onClick={() => signOut()}
-            className="w-full bg-red-50 hover:bg-red-100 border border-red-100 text-red-600 p-4 rounded-2xl flex items-center justify-center transition-all shadow-sm active:scale-95 group"
+            className="w-full flex items-center justify-center p-4 bg-white border border-red-200 text-red-600 rounded-2xl hover:bg-red-50 active:bg-red-100 transition-colors font-bold shadow-sm"
           >
-            <LogOut className="h-5 w-5 mr-2 group-hover:-translate-x-1 transition-transform" />
-            <span className="font-bold text-[15px]">Hesaptan Çıkış Yap</span>
+            <LogOut className="h-5 w-5 mr-2" />
+            Çıkış Yap
           </button>
         </section>
 
       </div>
 
-      <BottomSheet isOpen={isAutoSmsModalOpen} onClose={() => setIsAutoSmsModalOpen(false)} title="Gecikmiş Alacak Hatırlatmaları">
+      <BottomSheet isOpen={isAutoSmsModalOpen} onClose={() => setIsAutoSmsModalOpen(false)} title="SMS Hatırlatmaları">
         <div className="space-y-6 pt-4 pb-8">
           
           <div className="p-5 bg-gray-50 border border-gray-200 rounded-lg flex justify-between items-center shadow-sm">
             <div className="pr-4">
-              <p className="font-bold text-gray-900">Günlük Otomatik Gönderim</p>
-              <p className="text-xs font-medium text-gray-500 mt-1">Aktif edildiğinde, sistem her gün saat 10:00'da borcu geciken müşterilere otomatik SMS gönderir.</p>
+              <p className="font-bold text-gray-900">Otomatik Gönderim</p>
+              <p className="text-xs font-medium text-gray-500 mt-1">Borcu geciken müşterilere her sabah otomatik SMS gönderir.</p>
             </div>
             <button 
               onClick={handleToggleAutoSms}
               disabled={updateSettings.isPending}
-              className={`w-14 h-8 flex items-center rounded-full p-1 transition-colors flex-shrink-0 ${settings?.auto_sms_enabled ? 'bg-green-600' : 'bg-gray-300'}`}
+              className={`w-14 h-8 flex items-center rounded-full p-1 transition-colors flex-shrink-0 ${settings?.auto_sms_enabled ? 'bg-primary' : 'bg-gray-300'}`}
             >
               <div className={`bg-white w-6 h-6 rounded-full shadow-sm transform transition-transform ${settings?.auto_sms_enabled ? 'translate-x-6' : 'translate-x-0'}`} />
             </button>
@@ -322,13 +335,13 @@ export const Settings = () => {
 
           <div className="pt-2">
             <div className="flex justify-between items-end mb-4 px-1">
-              <h3 className="text-lg font-bold text-gray-900">Gecikmiş Müşteriler</h3>
-              <span className="px-3 py-1 bg-red-50 text-red-600 rounded-md font-bold text-sm border border-red-100">{overdueCustomers.length} Bulundu</span>
+              <h3 className="text-base font-bold text-gray-900">Gecikmiş Müşteriler</h3>
+              <span className="px-3 py-1 bg-gray-100 text-gray-700 rounded-md font-bold text-sm border border-gray-200">{overdueCustomers.length} Müşteri</span>
             </div>
             
             {overdueCustomers.length === 0 ? (
               <div className="p-6 bg-gray-50 rounded-lg text-center border border-gray-200 border-dashed">
-                <p className="text-sm font-medium text-gray-500 italic">Harika! Gecikmiş alacak bulunamadı.</p>
+                <p className="text-sm font-medium text-gray-500">Gecikmiş alacak bulunamadı.</p>
               </div>
             ) : (
               <div className="space-y-3 mb-6 max-h-[40vh] overflow-y-auto px-1 pb-2">
@@ -345,9 +358,9 @@ export const Settings = () => {
             )}
 
             {overdueCustomers.length > 0 && (
-              <Button fullWidth variant="danger" size="lg" onClick={handleSendBulkSms} disabled={updateSettings.isPending}>
+              <Button fullWidth variant="primary" size="lg" onClick={handleSendBulkSms} disabled={updateSettings.isPending}>
                 <Send className="h-5 w-5 mr-2" />
-                Herkese SMS Gönder
+                Toplu SMS Gönder
               </Button>
             )}
           </div>
@@ -368,11 +381,10 @@ export const Settings = () => {
             />
           </div>
           <Button className="w-full py-4 text-base mt-2" onClick={handleUpdateProfile} disabled={isUpdatingProfile}>
-            {isUpdatingProfile ? <Loader2 className="w-5 h-5 animate-spin mx-auto" /> : 'Kaydet'}
+            {isUpdatingProfile ? <Loader2 className="w-5 h-5 animate-spin mx-auto" /> : 'Değişiklikleri Kaydet'}
           </Button>
         </div>
       </BottomSheet>
-      </div>
     </div>
   );
 };

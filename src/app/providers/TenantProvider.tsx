@@ -1,11 +1,12 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { supabase } from '@/shared/api/supabase';
+import { useAuth } from './AuthProvider';
 
 interface TenantContextType {
   tenantId: string | null;
   tenantName: string | null;
   ownerName: string | null;
-  subscriptionEndsAt: string | null;
+  planType: string | null;
   isLoading: boolean;
   error: string | null;
   setOwnerName: (name: string) => void;
@@ -15,84 +16,86 @@ const TenantContext = createContext<TenantContextType>({
   tenantId: null,
   tenantName: null,
   ownerName: null,
-  subscriptionEndsAt: null,
+  planType: null,
   isLoading: true,
   error: null,
   setOwnerName: () => {},
 });
 
 export const TenantProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const { user } = useAuth();
   const [tenantId, setTenantId] = useState<string | null>(null);
   const [tenantName, setTenantName] = useState<string | null>(null);
   const [ownerName, setOwnerName] = useState<string | null>(null);
-  const [subscriptionEndsAt, setSubscriptionEndsAt] = useState<string | null>(null);
+  const [planType, setPlanType] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isExpired, setIsExpired] = useState(false);
+  const [prevUserId, setPrevUserId] = useState<string | undefined>(user?.id);
+
+  // React pattern to update state based on prop (user) change BEFORE render
+  if (user?.id !== prevUserId) {
+    setPrevUserId(user?.id);
+    if (user) {
+      setIsLoading(true);
+    }
+  }
 
   useEffect(() => {
     const resolveTenant = async () => {
       try {
-        const hostname = window.location.hostname;
-        
-        // Localhost dev test
-        let subdomain = 'demo'; 
-        
-        const urlParams = new URLSearchParams(window.location.search);
-        const queryTenant = urlParams.get('tenant');
-
-        if (hostname !== 'localhost' && hostname !== '127.0.0.1') {
-          if (queryTenant) {
-            subdomain = queryTenant;
-          } else if (hostname.includes('pages.dev')) {
-             subdomain = 'demo';
-          } else if (hostname.includes('beaveresiye.com')) {
-             const parts = hostname.split('.');
-             subdomain = parts[0] === 'www' ? parts[1] : parts[0];
-          } else {
-             // Custom domain handling logic
-             subdomain = hostname;
-          }
+        if (!user) {
+          setIsLoading(false);
+          return;
         }
 
-        // Query Supabase for the tenant
-        let query = supabase.from('tenants').select('id, name, owner_name, subscription_ends_at');
+        setIsLoading(true); // VERY IMPORTANT: user changed, start loading again
+        let query = supabase.from('tenants').select('id, name');
         
-        if (hostname.includes('beaveresiye.com') || hostname === 'localhost' || hostname.includes('pages.dev')) {
-           query = query.eq('subdomain', subdomain);
+        if (user.type === 'employee' && user.tenant_id) {
+           query = query.eq('id', user.tenant_id);
         } else {
-           query = query.eq('custom_domain', subdomain);
+           query = query.eq('owner_id', user.id).order('created_at', { ascending: true }).limit(1);
         }
 
-        const { data, error: sbError } = await query.single();
+        const { data, error: sbError } = await query.maybeSingle();
 
-        if (sbError || !data) {
-          setError('İşletme bulunamadı veya sistemde aktif değil.');
+        if (sbError) {
+          console.error('TenantProvider fetch error:', sbError);
+          setError('Bağlantı hatası: İşletme sorgulanamadı.');
+          setTenantId(null);
+        } else if (!data) {
+          // No tenant found - this is expected for new users
+          setTenantId(null);
         } else {
           setTenantId(data.id);
           setTenantName(data.name);
-          setOwnerName(data.owner_name || null);
-          setSubscriptionEndsAt(data.subscription_ends_at);
           
-          if (data.subscription_ends_at) {
-            const endsAt = new Date(data.subscription_ends_at);
-            if (endsAt < new Date()) {
-              setIsExpired(true);
-            }
+          // Get owner name from Auth user if it's the owner, otherwise we don't strictly need it here
+          if (user.type === 'owner') {
+             setOwnerName(user.name || '');
           }
-          
-          // Optionally update document title
-          document.title = `${data.name} | BeaVeresiye`;
+
+          // Fetch subscription plan
+          const { data: subData } = await supabase
+             .from('subscriptions')
+             .select('plan_type')
+             .eq('tenant_id', data.id)
+             .maybeSingle();
+             
+          setPlanType(subData?.plan_type || 'free');
+          setIsExpired(false); // Free plans do not expire yet
         }
       } catch (err) {
-        setError('Bağlantı hatası oluştu.');
+        console.error('Tenant fetch error:', err);
+        setError('Beklenmeyen bir hata oluştu.');
       } finally {
         setIsLoading(false);
       }
     };
 
     resolveTenant();
-  }, []);
+  }, [user]);
 
   if (isLoading) {
     return (
@@ -105,18 +108,9 @@ export const TenantProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     );
   }
 
-  if (error || !tenantId) {
-    return (
-      <div className="flex h-screen w-screen items-center justify-center bg-system-bg p-6 text-center">
-        <div className="rounded-ios-lg bg-system-surface p-6 shadow-ios-card">
-          <h2 className="mb-2 font-headline text-danger">Hata</h2>
-          <p className="font-body text-text-secondary">{error}</p>
-        </div>
-      </div>
-    );
-  }
-
-  if (isExpired) {
+  // Do not block rendering if there's no tenant. 
+  // Let ProtectedRoute handle redirecting to /onboarding.
+  if (isExpired && tenantId) {
     return (
       <div className="flex h-screen w-screen flex-col items-center justify-center bg-system-bg p-6 text-center">
         <div className="rounded-2xl bg-white p-8 max-w-sm w-full border border-danger/20 shadow-lg">
@@ -142,7 +136,7 @@ export const TenantProvider: React.FC<{ children: React.ReactNode }> = ({ childr
   }
 
   return (
-    <TenantContext.Provider value={{ tenantId, tenantName, ownerName, subscriptionEndsAt, isLoading, error, setOwnerName }}>
+    <TenantContext.Provider value={{ tenantId, tenantName, ownerName, planType, isLoading, error, setOwnerName }}>
       {children}
     </TenantContext.Provider>
   );

@@ -25,6 +25,20 @@ export const Login = () => {
     }
   }, [user, navigate]);
 
+  const handleOAuthLogin = async (provider: 'google' | 'apple') => {
+    setLoading(true);
+    const { error } = await supabase.auth.signInWithOAuth({
+      provider,
+      options: {
+        redirectTo: window.location.origin + '/onboarding'
+      }
+    });
+    if (error) {
+      toast.error('Giriş başarısız. Lütfen tekrar deneyin.');
+      setLoading(false);
+    }
+  };
+
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
@@ -94,7 +108,7 @@ export const Login = () => {
     <div className="flex min-h-screen flex-col relative overflow-hidden bg-gray-50">
       
       {/* Brand Header */}
-      <div className="flex flex-col items-center pt-24 pb-12 relative z-10">
+      <div className="flex flex-col items-center pt-8 pb-4 sm:pt-12 sm:pb-6 relative z-10">
         <motion.div
           initial={{ scale: 0.8, opacity: 0 }}
           animate={{ scale: 1, opacity: 1 }}
@@ -113,7 +127,7 @@ export const Login = () => {
           initial={{ y: 12, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
           transition={{ duration: 0.4, delay: 0.1 }}
-          className="mt-6 text-center"
+          className="mt-4 text-center"
         >
           <h1 className="text-3xl font-bold text-gray-900 tracking-tight">BeaVeresiye</h1>
           <p className="mt-1 text-sm font-semibold text-gray-500 uppercase tracking-widest">Smart Business</p>
@@ -126,7 +140,7 @@ export const Login = () => {
               animate={{ y: 0, opacity: 1, scale: 1 }}
               exit={{ opacity: 0 }}
               transition={{ duration: 0.35, delay: 0.2 }}
-              className="mt-5 inline-flex items-center gap-2 rounded-md border border-gray-200 bg-white px-5 py-2 shadow-sm"
+              className="mt-3 inline-flex items-center gap-2 rounded-md border border-gray-200 bg-white px-4 py-2 shadow-sm text-sm"
             >
               <Store className="h-4 w-4 text-primary" />
               <span className="font-semibold text-gray-900">{tenantName}</span>
@@ -136,7 +150,7 @@ export const Login = () => {
       </div>
 
       {/* Form Card */}
-      <div className="flex-1 px-4 sm:px-6 md:max-w-md md:mx-auto md:w-full relative z-10 pb-10">
+      <div className="flex-1 px-4 sm:px-6 md:max-w-md md:mx-auto md:w-full relative z-10 pb-6">
         <motion.div
           initial={{ y: 24, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
@@ -144,11 +158,11 @@ export const Login = () => {
         >
           <Card padding="lg" className="w-full shadow-lg border-gray-200 bg-white">
             <h2 className="text-xl font-bold text-gray-900">Tekrar Hoş Geldiniz</h2>
-            <p className="mt-1 text-sm font-medium text-gray-500 mb-8">
+            <p className="mt-1 text-sm font-medium text-gray-500 mb-6">
               Hesabınıza giriş yapın
             </p>
 
-            <form onSubmit={handleLogin} className="flex flex-col gap-5">
+            <form onSubmit={handleLogin} className="flex flex-col gap-4">
 
               <div className="flex items-center px-4 bg-white border border-gray-300 rounded-md focus-within:ring-2 focus-within:ring-primary focus-within:border-primary shadow-sm">
                 <input
@@ -203,13 +217,37 @@ export const Login = () => {
               </motion.button>
             </form>
 
-            <div className="mt-8 flex items-center gap-4">
+            <div className="mt-6 flex items-center gap-4">
               <div className="h-px flex-1 bg-gray-200" />
               <span className="text-xs font-semibold text-gray-400 uppercase tracking-wider">veya</span>
               <div className="h-px flex-1 bg-gray-200" />
             </div>
 
-            <div className="mt-6 flex justify-center">
+            <div className="mt-4 flex flex-col gap-3">
+              <button
+                type="button"
+                onClick={() => handleOAuthLogin('google')}
+                disabled={loading}
+                className="flex items-center justify-center gap-3 w-full bg-white border border-gray-300 text-gray-700 rounded-md h-12 font-bold hover:bg-gray-50 transition-colors shadow-sm disabled:opacity-50"
+              >
+                <img src="https://www.svgrepo.com/show/475656/google-color.svg" alt="Google" className="w-5 h-5" />
+                Google ile Devam Et
+              </button>
+              
+              <button
+                type="button"
+                onClick={() => handleOAuthLogin('apple')}
+                disabled={loading}
+                className="flex items-center justify-center gap-3 w-full bg-black text-white rounded-md h-12 font-bold hover:bg-gray-900 transition-colors shadow-sm disabled:opacity-50"
+              >
+                <svg className="w-5 h-5 fill-current" viewBox="0 0 24 24">
+                  <path d="M17.05 20.28c-.98.95-2.05.8-3.08.35-1.09-.46-2.09-.48-3.24 0-1.44.62-2.2.44-3.06-.35C2.79 15.25 3.51 7.59 9.05 7.31c1.35.07 2.29.74 3.08.8 1.18-.04 2.26-.79 3.59-.8 1.83.1 3.25 1.05 4.09 2.45-3.32 2.1-2.73 6.07.6 7.42-.78 1.88-2.06 3.96-3.36 5.1zM12.03 7.25c-.15-2.23 1.66-4.07 3.74-4.25.32 2.37-2.04 4.31-3.74 4.25z" />
+                </svg>
+                Apple ile Devam Et
+              </button>
+            </div>
+
+            <div className="mt-4 flex justify-center">
               <button
                 type="button"
                 onClick={() => navigate('/admin/login')}
