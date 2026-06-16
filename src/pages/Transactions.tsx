@@ -97,10 +97,10 @@ export const Transactions = () => {
   const handleAddTx = async (type: 'income' | 'expense') => {
     if (!tenantId || !user || !txAmount) return;
     
-    try {
       await addTransactionMutation.mutateAsync({
         tenant_id: tenantId,
         user_id: user.id,
+        cashier_name: user.name || user.email?.split('@')[0] || 'Patron',
         type: type,
         amount: parseFloat(txAmount),
         description: txDesc || (type === 'income' ? 'Diğer Gelir' : 'Gider/Masraf'),
