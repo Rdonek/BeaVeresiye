@@ -151,12 +151,15 @@ export const Transactions = () => {
     let totalVeresiye = 0;
     
     filteredTransactions.forEach(tx => {
-      // Veresiye satışları kasaya giren nakit olarak saymıyoruz
-      if (tx.payment_method === 'veresiye' && tx.type === 'sale') {
+      // Veresiye olan BÜTÜN girişler (Satış veya Devir Bakiyesi gibi Gelirler) fiziksel kasaya girmez!
+      if (tx.payment_method === 'veresiye' && (tx.type === 'sale' || tx.type === 'income')) {
         totalVeresiye += Number(tx.amount);
-      } else if (tx.type === 'sale' || tx.type === 'income') {
+      } 
+      // Sadece nakit ve kredi kartı olanlar Fiziksel Kasaya girer
+      else if (tx.type === 'sale' || tx.type === 'income') {
         totalIncome += Number(tx.amount);
-      } else if (tx.type === 'expense') {
+      } 
+      else if (tx.type === 'expense') {
         totalExpense += Number(tx.amount);
       }
     });
