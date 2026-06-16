@@ -11,6 +11,7 @@ import { Button } from '@/shared/ui/Button';
 import { Input } from '@/shared/ui/Input';
 import { BottomSheet } from '@/shared/ui/BottomSheet';
 import { useAddFinanceTransaction, useDeleteFinanceTransaction } from '@/shared/hooks/useFinance';
+import { useEntities } from '@/shared/hooks/useEntities';
 import { toast } from 'react-hot-toast';
 
 type DateFilter = 'today' | 'week' | 'month' | 'all';
@@ -145,15 +146,17 @@ export const Transactions = () => {
     });
   }, [transactions, searchQuery]);
 
+  const { data: customers = [] } = useEntities(tenantId);
+  const totalAlacak = customers.reduce((sum, c) => sum + (c.balance || 0), 0);
+
   const summary = useMemo(() => {
     let totalIncome = 0;
     let totalExpense = 0;
-    let totalVeresiye = 0;
     
     filteredTransactions.forEach(tx => {
-      // Veresiye olan BÜTÜN girişler (Satış veya Devir Bakiyesi gibi Gelirler) fiziksel kasaya girmez!
+      // Veresiye olan girişler fiziksel kasaya girmez
       if (tx.payment_method === 'veresiye' && (tx.type === 'sale' || tx.type === 'income')) {
-        totalVeresiye += Number(tx.amount);
+        // Önceden totalVeresiye'ye ekliyorduk, artık global alacağı kullanıyoruz
       } 
       // Sadece nakit ve kredi kartı olanlar Fiziksel Kasaya girer
       else if (tx.type === 'sale' || tx.type === 'income') {
@@ -164,7 +167,7 @@ export const Transactions = () => {
       }
     });
     
-    return { totalIncome, totalExpense, totalVeresiye, net: totalIncome - totalExpense };
+    return { totalIncome, totalExpense, net: totalIncome - totalExpense };
   }, [filteredTransactions]);
 
   const groupedTransactions = useMemo(() => {
@@ -225,11 +228,11 @@ export const Transactions = () => {
             {summary.net.toLocaleString('tr-TR', { minimumFractionDigits: 2 })} <span className="text-2xl text-gray-400 font-medium">₺</span>
           </h2>
           
-          {summary.totalVeresiye > 0 && (
+          {totalAlacak > 0 && (
             <div className="mt-3 bg-white/5 border border-white/10 rounded-full px-3 py-1 flex items-center gap-2">
               <span className="w-2 h-2 rounded-full bg-blue-400 animate-pulse"></span>
               <p className="text-xs text-blue-200 font-medium tracking-wide">
-                Veresiye (Dışarıdaki Para): <span className="font-bold">{summary.totalVeresiye.toLocaleString('tr-TR', { minimumFractionDigits: 2 })} ₺</span>
+                Piyasada Bekleyen Alacak: <span className="font-bold">{totalAlacak.toLocaleString('tr-TR', { minimumFractionDigits: 2 })} ₺</span>
               </p>
             </div>
           )}
