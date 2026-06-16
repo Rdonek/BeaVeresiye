@@ -124,18 +124,31 @@ export const History = () => {
     toast.success('Excel dosyası indirildi.');
   };
 
+  const replaceTurkishChars = (text: string) => {
+    if (!text) return '';
+    return String(text)
+      .replace(/Ğ/g, 'G').replace(/ğ/g, 'g')
+      .replace(/Ü/g, 'U').replace(/ü/g, 'u')
+      .replace(/Ş/g, 'S').replace(/ş/g, 's')
+      .replace(/İ/g, 'I').replace(/ı/g, 'i')
+      .replace(/Ö/g, 'O').replace(/ö/g, 'o')
+      .replace(/Ç/g, 'C').replace(/ç/g, 'c');
+  };
+
   const handleExportPDF = () => {
     if (exportData.length === 0) {
       toast.error('Dışa aktarılacak veri bulunamadı.');
       return;
     }
     const doc = new jsPDF('l', 'pt', 'a4');
-    doc.text(`${tenantName || 'İşletme'} - İşlem Geçmişi Raporu`, 40, 40);
+    
+    const safeTenantName = replaceTurkishChars(tenantName || 'Isletme');
+    doc.text(`${safeTenantName} - Islem Gecmisi Raporu`, 40, 40);
     doc.setFontSize(10);
     doc.text(`Tarih: ${format(new Date(), 'dd.MM.yyyy HH:mm')}`, 40, 55);
     
-    const headers = [['Tarih', 'İşlem Tipi', 'Açıklama', 'Müşteri', 'Ödeme Yöntemi', 'Kasiyer', 'Tutar (TL)']];
-    const data = exportData.map(row => Object.values(row));
+    const headers = [['Tarih', 'Islem Tipi', 'Aciklama', 'Musteri', 'Odeme Yontemi', 'Kasiyer', 'Tutar (TL)']];
+    const data = exportData.map(row => Object.values(row).map(val => replaceTurkishChars(String(val))));
 
     autoTable(doc, {
       head: headers,
