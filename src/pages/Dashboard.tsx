@@ -162,7 +162,7 @@ export const Dashboard = () => {
             <button onClick={() => navigate('/transactions')} className="text-[11px] font-bold text-primary hover:bg-primary/10 px-3 py-1.5 rounded-full transition-colors uppercase tracking-wider">Tümü</button>
           </div>
           
-          <div className="bg-white rounded-[24px] border border-gray-100 shadow-sm flex flex-col overflow-hidden relative">
+          <div className="bg-white rounded-[24px] border border-gray-100 shadow-sm flex flex-col overflow-y-auto overflow-x-hidden max-h-[350px] custom-scrollbar relative">
             {loading ? (
               <div className="p-12 flex justify-center text-gray-300"><Wallet className="w-8 h-8 animate-pulse" /></div>
             ) : recentTxs.length === 0 ? (

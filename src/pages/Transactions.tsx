@@ -354,7 +354,7 @@ export const Transactions = () => {
         )}
       </AnimatePresence>
 
-      <GlassCard variant="panel" padding="none" className="min-h-[50vh] overflow-hidden">
+      <GlassCard variant="panel" padding="none" className="max-h-[450px] overflow-y-auto overflow-x-hidden custom-scrollbar border border-gray-100">
         {loading ? (
           <div className="flex items-center justify-center py-20 text-text-tertiary font-subhead flex-col">
             <Loader2 className="animate-spin h-8 w-8 text-primary mb-4" />
