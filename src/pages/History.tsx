@@ -1,8 +1,8 @@
 import React, { useState, useMemo } from 'react';
 import { Header } from '@/widgets/Header';
 import { useTenant } from '@/app/providers/TenantProvider';
-import { useFinanceTransactions, useDeleteFinanceTransaction } from '@/shared/hooks/useFinance';
-import { useEntities } from '@/shared/hooks/useEntities';
+import { useFinanceTransactions, useUpdateFinanceTransaction } from '@/shared/hooks/useFinance';
+import { useEntities, useUpdateEntityBalance } from '@/shared/hooks/useEntities';
 import { GlassCard } from '@/shared/ui/GlassCard';
 import { Input } from '@/shared/ui/Input';
 import { Button } from '@/shared/ui/Button';
@@ -22,7 +22,8 @@ export const History = () => {
   const { data: transactions = [], isLoading } = useFinanceTransactions(tenantId);
   const { data: customers = [] } = useEntities(tenantId);
 
-  const deleteMutation = useDeleteFinanceTransaction();
+  const updateMutation = useUpdateFinanceTransaction();
+  const updateBalanceMutation = useUpdateEntityBalance();
 
   const [search, setSearch] = useState('');
   const [startDate, setStartDate] = useState('');
@@ -171,14 +172,35 @@ export const History = () => {
 
   const handleDelete = async () => {
     if (!selectedTx || !tenantId) return;
-    if (window.confirm('DİKKAT: Bu işlemi silmek hesapları kalıcı olarak etkileyebilir ve bu işlem geri alınamaz! Sorumluluk tamamen size aittir. Silmek istediğinize emin misiniz?')) {
+    if (window.confirm('DİKKAT: Bu işlemi iptal etmek hesapları kalıcı olarak etkileyebilir. İptal edilen işlemler listede üstü çizik olarak kalır ancak bakiyeler geri alınır. İptal etmek istediğinize emin misiniz?')) {
       try {
-        await deleteMutation.mutateAsync({ id: selectedTx.id, tenant_id: tenantId });
-        toast.success('İşlem başarıyla silindi.');
+        if (selectedTx.customer_id) {
+          const customer = customers.find(c => c.id === selectedTx.customer_id);
+          if (customer) {
+            const isDebt = selectedTx.payment_method === 'veresiye' || selectedTx.description?.includes('Borç') || selectedTx.description?.includes('Açılış') || selectedTx.type === 'sale';
+            const reverseBalanceChange = isDebt ? -selectedTx.amount : selectedTx.amount;
+            const newBalance = (customer.balance || 0) + reverseBalanceChange;
+            
+            await updateBalanceMutation.mutateAsync({
+              id: customer.id,
+              newBalance,
+              tenantId
+            });
+          }
+        }
+
+        await updateMutation.mutateAsync({ 
+          id: selectedTx.id, 
+          tenant_id: tenantId,
+          payment_method: 'cancelled',
+          description: `[İPTAL EDİLDİ] ${selectedTx.description || ''}`
+        });
+
+        toast.success('İşlem başarıyla iptal edildi ve bakiyeler güncellendi.');
         setIsDetailOpen(false);
         setSelectedTx(null);
       } catch (err) {
-        toast.error('Silme sırasında hata oluştu.');
+        toast.error('İptal sırasında hata oluştu.');
       }
     }
   };
@@ -304,11 +326,13 @@ export const History = () => {
               <div className="col-span-2 text-right">Tutar</div>
             </div>
 
-            {filteredTransactions.map((tx) => (
+            {filteredTransactions.map((tx) => {
+              const isCancelled = tx.payment_method === 'cancelled' || tx.description?.startsWith('[İPTAL');
+              return (
               <div 
                 key={tx.id} 
                 onClick={() => { setSelectedTx(tx); setIsDetailOpen(true); }}
-                className="px-6 py-4 flex flex-col md:grid md:grid-cols-12 md:gap-4 md:items-center hover:bg-gray-50 cursor-pointer transition-colors print:hover:bg-transparent print:border-b print:border-gray-200 print:py-2"
+                className={`px-6 py-4 flex flex-col md:grid md:grid-cols-12 md:gap-4 md:items-center hover:bg-gray-50 cursor-pointer transition-colors print:hover:bg-transparent print:border-b print:border-gray-200 print:py-2 ${isCancelled ? 'opacity-50 line-through grayscale' : ''}`}
               >
                 {/* Mobile View */}
                 <div className="flex items-center justify-between md:hidden mb-2">
@@ -356,7 +380,7 @@ export const History = () => {
                   {tx.type === 'expense' ? '-' : '+'}{Number(tx.amount).toLocaleString('tr-TR', { minimumFractionDigits: 2 })} ₺
                 </div>
               </div>
-            ))}
+            )})}
           </div>
         )}
       </GlassCard>

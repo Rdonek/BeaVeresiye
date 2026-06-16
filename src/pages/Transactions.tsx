@@ -140,6 +140,7 @@ export const Transactions = () => {
 
   const filteredTransactions = useMemo(() => {
     return transactions.filter(tx => {
+      if (tx.payment_method === 'cancelled' || tx.description?.startsWith('[İPTAL')) return false;
       if (searchQuery && !(tx.description || '').toLowerCase().includes(searchQuery.toLowerCase()) && !(tx.cashier_name || '').toLowerCase().includes(searchQuery.toLowerCase())) {
         return false;
       }
