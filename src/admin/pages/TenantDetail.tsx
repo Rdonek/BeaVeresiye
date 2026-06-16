@@ -62,7 +62,7 @@ export const TenantDetail = () => {
         <button onClick={() => navigate('/admin/tenants')} className="p-2 bg-white rounded-full shadow-sm hover:bg-gray-50"><ArrowLeft className="h-5 w-5" /></button>
         <div>
           <h1 className="font-large-title text-text-primary">{tenant.name}</h1>
-          <p className="font-body text-text-secondary">{tenant.subdomain}.beaveresiye.com</p>
+          <p className="font-body text-text-secondary">{tenant.subdomain}.bidefter.com</p>
         </div>
       </div>
 

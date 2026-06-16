@@ -45,7 +45,7 @@ export const TenantsList = () => {
                 <div>
                   <h3 className="font-headline text-text-primary">{t.name}</h3>
                   <div className="flex items-center gap-2 mt-0.5">
-                    <p className="font-caption text-text-tertiary">{t.subdomain}.beaveresiye</p>
+                    <p className="font-caption text-text-tertiary">{t.subdomain}.bidefter</p>
                     <span className="w-1 h-1 rounded-full bg-system-muted"></span>
                     <p className="font-caption text-primary">SMS: {t.sms_credits || 0}</p>
                   </div>

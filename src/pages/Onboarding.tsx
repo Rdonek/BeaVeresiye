@@ -132,7 +132,7 @@ export const Onboarding = () => {
       >
         <div className="text-center mb-8">
           <div className="mx-auto h-16 w-16 rounded-2xl bg-white shadow-sm flex items-center justify-center border border-gray-200 p-2 mb-4">
-            <img src="/beaveresiye_icon.svg" alt="BeaVeresiye" className="w-full h-full object-contain" />
+            <img src="/bidefter_icon.svg" alt="BiDefter" className="w-full h-full object-contain" />
           </div>
           <h2 className="text-3xl font-bold text-gray-900 tracking-tight">İşletmenizi Kurun</h2>
           <p className="mt-2 text-sm text-gray-500">15 saniyede veresiye defterinizi oluşturun.</p>

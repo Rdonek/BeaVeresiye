@@ -122,7 +122,7 @@ export const TenantProvider: React.FC<{ children: React.ReactNode }> = ({ childr
           <h2 className="mb-2 font-large-title text-danger">Süreniz Doldu</h2>
           <p className="font-subhead text-text-secondary mb-6">Abonelik süreniz sona ermiştir. Sistemi kullanmaya devam etmek için lütfen yöneticiyle iletişime geçerek sürenizi uzatın.</p>
           <button 
-            onClick={() => window.open(`https://wa.me/905000000000?text=${encodeURIComponent(`Merhaba, ${tenantName} işletmesi için BeaVeresiye aboneliğimi uzatmak istiyorum.`)}`, '_blank')}
+            onClick={() => window.open(`https://wa.me/905000000000?text=${encodeURIComponent(`Merhaba, ${tenantName} işletmesi için BiDefter aboneliğimi uzatmak istiyorum.`)}`, '_blank')}
             className="w-full bg-[#25D366] text-white py-3 rounded-xl font-headline flex justify-center items-center gap-2 hover:bg-[#128C7E] transition-colors"
           >
             <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">

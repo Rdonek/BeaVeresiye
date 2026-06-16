@@ -109,8 +109,8 @@ export const Login = () => {
         >
           <div className="h-20 w-20 rounded-xl bg-white shadow-sm flex items-center justify-center border border-gray-200 p-3">
             <img
-              src="/beaveresiye_icon.svg"
-              alt="BeaVeresiye"
+              src="/bidefter_icon.svg"
+              alt="BiDefter"
               className="w-full h-full object-contain drop-shadow-sm rounded-lg"
             />
           </div>
@@ -122,7 +122,7 @@ export const Login = () => {
           transition={{ duration: 0.4, delay: 0.1 }}
           className="mt-4 text-center"
         >
-          <h1 className="text-3xl font-bold text-gray-900 tracking-tight">BeaVeresiye</h1>
+          <h1 className="text-3xl font-bold text-gray-900 tracking-tight">BiDefter</h1>
           <p className="mt-1 text-sm font-semibold text-gray-500 uppercase tracking-widest">Smart Business</p>
         </motion.div>
       </div>

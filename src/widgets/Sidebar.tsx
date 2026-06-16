@@ -37,9 +37,9 @@ export const Sidebar = () => {
     <aside className={sidebarClasses}>
       <div className="flex items-center justify-between px-6 py-6 border-b border-gray-100">
         <div className="flex items-center gap-3">
-          <img src="/beaveresiye_icon.svg" alt="BeaVeresiye Logo" className="w-10 h-10 rounded-[14px] shadow-sm" />
+          <img src="/bidefter_icon.svg" alt="BiDefter Logo" className="w-10 h-10 rounded-[14px] shadow-sm" />
           <div>
-            <h2 className="font-bold text-gray-900 tracking-tight text-lg leading-tight">BeaVeresiye</h2>
+            <h2 className="font-bold text-gray-900 tracking-tight text-lg leading-tight">BiDefter</h2>
             <p className="text-xs text-gray-500 font-medium truncate max-w-[140px]">{tenantName}</p>
           </div>
         </div>

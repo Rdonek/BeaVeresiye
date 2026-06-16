@@ -58,8 +58,8 @@ export const AdminLogin = () => {
           transition={{ duration: 0.5, type: 'spring', bounce: 0.35 }}
         >
           <img
-            src="/beaveresiye_icon.svg"
-            alt="BeaVeresiye"
+            src="/bidefter_icon.svg"
+            alt="BiDefter"
             className="h-16 w-16 rounded-lg object-contain shadow-premium"
           />
         </motion.div>
@@ -71,7 +71,7 @@ export const AdminLogin = () => {
           transition={{ duration: 0.4, delay: 0.1 }}
           className="mt-5 text-center"
         >
-          <h1 className="font-large-title text-text-primary">BeaVeresiye</h1>
+          <h1 className="font-large-title text-text-primary">BiDefter</h1>
           <p className="mt-1 font-subhead text-text-tertiary">Sistem Yönetim Paneli</p>
         </motion.div>
 
