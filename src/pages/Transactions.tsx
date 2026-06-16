@@ -26,6 +26,7 @@ interface Transaction {
   created_at: string;
   cashier_name?: string;
   tenant_id?: string;
+  status?: string;
 }
 
 export const Transactions = () => {
