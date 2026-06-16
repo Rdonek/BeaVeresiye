@@ -200,67 +200,78 @@ export const Transactions = () => {
       />
       
       {/* Summary Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 -mt-2">
-        <GlassCard className="p-4 flex items-center justify-between border-l-4 border-l-success">
-          <div>
-            <p className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">Toplam Giriş</p>
-            <p className="text-2xl font-extrabold text-gray-900">{summary.totalIncome.toLocaleString('tr-TR', { minimumFractionDigits: 2 })} ₺</p>
+      <div className="flex overflow-x-auto pb-2 -mx-4 px-4 md:mx-0 md:px-0 md:grid md:grid-cols-3 gap-4 snap-x scrollbar-hide">
+        <GlassCard className="min-w-[200px] flex-1 md:min-w-0 p-4 flex flex-col justify-between gap-3 border-l-4 border-l-success snap-start">
+          <div className="flex justify-between items-start">
+            <p className="text-xs font-bold text-gray-500 uppercase tracking-wider">Toplam Giriş</p>
+            <div className="h-8 w-8 rounded-full bg-success/10 text-success flex items-center justify-center flex-shrink-0">
+              <TrendingUp className="h-4 w-4" />
+            </div>
           </div>
-          <div className="h-12 w-12 rounded-full bg-success/10 text-success flex items-center justify-center">
-            <TrendingUp className="h-6 w-6" />
-          </div>
+          <p className="text-2xl lg:text-3xl font-extrabold text-gray-900 truncate" title={`${summary.totalIncome} ₺`}>
+            {summary.totalIncome.toLocaleString('tr-TR', { minimumFractionDigits: 2 })} <span className="text-lg lg:text-xl text-gray-500">₺</span>
+          </p>
         </GlassCard>
-        <GlassCard className="p-4 flex items-center justify-between border-l-4 border-l-danger">
-          <div>
-            <p className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">Toplam Çıkış</p>
-            <p className="text-2xl font-extrabold text-gray-900">{summary.totalExpense.toLocaleString('tr-TR', { minimumFractionDigits: 2 })} ₺</p>
+
+        <GlassCard className="min-w-[200px] flex-1 md:min-w-0 p-4 flex flex-col justify-between gap-3 border-l-4 border-l-danger snap-start">
+          <div className="flex justify-between items-start">
+            <p className="text-xs font-bold text-gray-500 uppercase tracking-wider">Toplam Çıkış</p>
+            <div className="h-8 w-8 rounded-full bg-danger/10 text-danger flex items-center justify-center flex-shrink-0">
+              <TrendingDown className="h-4 w-4" />
+            </div>
           </div>
-          <div className="h-12 w-12 rounded-full bg-danger/10 text-danger flex items-center justify-center">
-            <TrendingDown className="h-6 w-6" />
-          </div>
+          <p className="text-2xl lg:text-3xl font-extrabold text-gray-900 truncate" title={`${summary.totalExpense} ₺`}>
+            {summary.totalExpense.toLocaleString('tr-TR', { minimumFractionDigits: 2 })} <span className="text-lg lg:text-xl text-gray-500">₺</span>
+          </p>
         </GlassCard>
-        <GlassCard className="p-4 flex items-center justify-between border-l-4 border-l-primary bg-primary/[0.02]">
-          <div>
-            <p className="text-xs font-bold text-primary uppercase tracking-wider mb-1">Net Kasa (Bakiye)</p>
-            <p className="text-2xl font-extrabold text-primary">{summary.net.toLocaleString('tr-TR', { minimumFractionDigits: 2 })} ₺</p>
+
+        <GlassCard className="min-w-[200px] flex-1 md:min-w-0 p-4 flex flex-col justify-between gap-3 border-l-4 border-l-primary bg-primary/[0.02] snap-start">
+          <div className="flex justify-between items-start">
+            <p className="text-xs font-bold text-primary uppercase tracking-wider">Net Kasa (Bakiye)</p>
+            <div className="h-8 w-8 rounded-full bg-primary/10 text-primary flex items-center justify-center flex-shrink-0">
+              <Wallet className="h-4 w-4" />
+            </div>
           </div>
-          <div className="h-12 w-12 rounded-full bg-primary/10 text-primary flex items-center justify-center">
-            <Wallet className="h-6 w-6" />
-          </div>
+          <p className="text-2xl lg:text-3xl font-extrabold text-primary truncate" title={`${summary.net} ₺`}>
+            {summary.net.toLocaleString('tr-TR', { minimumFractionDigits: 2 })} <span className="text-lg lg:text-xl opacity-70">₺</span>
+          </p>
         </GlassCard>
       </div>
 
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <div className="flex-1 max-w-md">
-          <Input 
-            icon={<Search className="w-4 h-4" />}
-            placeholder="İşlem veya kasiyer ara..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-          />
-        </div>
-        <div className="flex items-center gap-2 w-full md:w-auto">
+      <div className="flex flex-col gap-4">
+        {/* Action Buttons */}
+        <div className="grid grid-cols-2 gap-3">
           <Button 
             onClick={() => { setTxAmount(''); setTxDesc(''); setIsAddIncomeOpen(true); }}
             variant="outline"
-            className="flex-1 md:flex-none text-success border-success/30 bg-success/5 hover:bg-success/10 whitespace-nowrap"
+            className="text-success border-success/30 bg-success/5 hover:bg-success/10 py-3"
           >
-            <ArrowDownRight className="h-4 w-4 mr-1 sm:mr-2" />
-            <span className="hidden sm:inline">Gelir Ekle</span>
-            <span className="inline sm:hidden">Gelir</span>
+            <ArrowDownRight className="h-5 w-5 mr-2" />
+            Gelir Ekle
           </Button>
           <Button 
             onClick={() => { setTxAmount(''); setTxDesc(''); setIsAddExpenseOpen(true); }}
             variant="danger"
-            className="flex-1 md:flex-none whitespace-nowrap"
+            className="py-3"
           >
-            <ArrowUpRight className="h-4 w-4 mr-1 sm:mr-2" />
-            <span className="hidden sm:inline">Masraf Ekle</span>
-            <span className="inline sm:hidden">Masraf</span>
+            <ArrowUpRight className="h-5 w-5 mr-2" />
+            Masraf Ekle
           </Button>
+        </div>
+
+        {/* Search & Filter */}
+        <div className="flex items-center gap-2">
+          <div className="flex-1">
+            <Input 
+              icon={<Search className="w-5 h-5 text-gray-400" />}
+              placeholder="İşlem veya kasiyer ara..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+            />
+          </div>
           <button 
             onClick={() => setIsFilterOpen(!isFilterOpen)}
-            className={`h-10 w-10 flex-shrink-0 flex items-center justify-center rounded-lg transition-all border ${isFilterOpen ? 'bg-primary border-primary text-white' : 'bg-white border-gray-300 text-gray-700 hover:bg-gray-50'}`}
+            className={`h-[42px] w-[42px] flex-shrink-0 flex items-center justify-center rounded-xl transition-all border ${isFilterOpen ? 'bg-primary border-primary text-white' : 'bg-white border-gray-300 text-gray-700 hover:bg-gray-50'}`}
           >
             <Filter className="h-5 w-5" />
           </button>
