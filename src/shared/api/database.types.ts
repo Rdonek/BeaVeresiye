@@ -14,6 +14,138 @@ export type Database = {
   }
   graphql_public: {
     Tables: {
+      invoices: {
+        Row: {
+          billing_info: Json
+          created_at: string
+          id: string
+          invoice_number: string
+          subtotal: number
+          tax_amount: number
+          tenant_id: string
+          total: number
+          transaction_id: string | null
+        }
+        Insert: {
+          billing_info: Json
+          created_at?: string
+          id?: string
+          invoice_number: string
+          subtotal: number
+          tax_amount: number
+          tenant_id: string
+          total: number
+          transaction_id?: string | null
+        }
+        Update: {
+          billing_info?: Json
+          created_at?: string
+          id?: string
+          invoice_number?: string
+          subtotal?: number
+          tax_amount?: number
+          tenant_id?: string
+          total?: number
+          transaction_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "invoices_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "invoices_transaction_id_fkey"
+            columns: ["transaction_id"]
+            isOneToOne: false
+            referencedRelation: "payment_transactions"
+            referencedColumns: ["id"]
+          }
+        ]
+      }
+      payment_transactions: {
+        Row: {
+          amount: number
+          created_at: string
+          currency: string
+          id: string
+          merchant_oid: string
+          metadata: Json | null
+          provider: string
+          provider_transaction_id: string | null
+          status: string
+          tenant_id: string
+          updated_at: string
+        }
+        Insert: {
+          amount: number
+          created_at?: string
+          currency?: string
+          id?: string
+          merchant_oid: string
+          metadata?: Json | null
+          provider: string
+          provider_transaction_id?: string | null
+          status?: string
+          tenant_id: string
+          updated_at?: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          currency?: string
+          id?: string
+          merchant_oid?: string
+          metadata?: Json | null
+          provider?: string
+          provider_transaction_id?: string | null
+          status?: string
+          tenant_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "payment_transactions_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          }
+        ]
+      }
+      webhook_logs: {
+        Row: {
+          created_at: string
+          event_type: string | null
+          id: string
+          payload: Json
+          processed: boolean
+          provider: string
+          status: string | null
+        }
+        Insert: {
+          created_at?: string
+          event_type?: string | null
+          id?: string
+          payload: Json
+          processed?: boolean
+          provider: string
+          status?: string | null
+        }
+        Update: {
+          created_at?: string
+          event_type?: string | null
+          id?: string
+          payload?: Json
+          processed?: boolean
+          provider?: string
+          status?: string | null
+        }
+        Relationships: []
+      }
+
       [_ in never]: never
     }
     Views: {
