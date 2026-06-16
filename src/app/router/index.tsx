@@ -24,6 +24,7 @@ import { Settings } from '@/pages/Settings';
 import { Employees } from '@/pages/Employees';
 import { Transactions } from '@/pages/Transactions';
 import { History } from '@/pages/History';
+import { ConnectLedger } from '@/pages/ConnectLedger';
 import { NotFound } from '@/pages/NotFound';
 
 // Pages - Admin
@@ -102,6 +103,10 @@ export const router = createBrowserRouter([
           {
             path: 'history',
             element: <PermissionGuard permission="dashboard"><History /></PermissionGuard>
+          },
+          {
+            path: 'bagla/:code',
+            element: <ConnectLedger />
           }
         ]
       }

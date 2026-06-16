@@ -20,7 +20,7 @@ export const EmptyState: React.FC<EmptyStateProps> = ({
   actionIcon: ActionIcon
 }) => {
   return (
-    <div className="flex flex-col items-center justify-center p-8 sm:p-12 h-full min-h-[300px] text-center bg-white rounded-3xl border border-gray-100 shadow-sm animate-in fade-in slide-in-from-bottom-4 duration-500 w-full flex-1">
+    <div className="flex flex-col items-center justify-center py-12 px-6 sm:px-12 min-h-[300px] text-center bg-white rounded-3xl border border-gray-100 shadow-sm animate-in fade-in slide-in-from-bottom-4 duration-500 w-full">
       <div className="w-20 h-20 bg-gray-50 rounded-full flex items-center justify-center mb-6 shadow-inner">
         <Icon className="w-10 h-10 text-gray-300" />
       </div>

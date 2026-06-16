@@ -198,7 +198,7 @@ export const Pos = () => {
         </Button>
       </div>
 
-      <div className="flex flex-col lg:flex-row gap-6 lg:items-start min-h-0">
+      <div className="flex-1 flex flex-col lg:flex-row gap-6 lg:items-start min-h-0">
         
         {/* Sol Taraf: Ürünler Grid */}
         <div className="flex-1 bg-white rounded-2xl border border-gray-200 shadow-sm flex flex-col overflow-hidden">
@@ -215,7 +215,7 @@ export const Pos = () => {
             </div>
           </div>
           
-          <div className="p-4 bg-gray-50/30">
+          <div className="flex-1 overflow-y-auto p-4 flex flex-col gap-3 min-h-[300px]">
             {loadingProducts ? (
               <div className="flex justify-center py-12"><Loader2 className="w-8 h-8 animate-spin text-primary" /></div>
             ) : filteredProducts.length === 0 ? (
@@ -253,7 +253,7 @@ export const Pos = () => {
         </div>
 
         {/* Sağ Taraf: Sepet */}
-        <div className="w-full lg:w-[400px] xl:w-[450px] bg-white rounded-2xl border border-gray-200 shadow-sm flex flex-col shrink-0 lg:sticky lg:top-24 lg:max-h-[calc(100vh-120px)]">
+        <div className="w-full lg:w-[400px] xl:w-[450px] bg-white rounded-2xl border border-gray-200 shadow-sm flex flex-col shrink-0 lg:h-full">
           <div className="p-5 border-b border-gray-100 flex items-center gap-3 bg-gray-50/50 rounded-t-2xl shrink-0">
             <div className="w-10 h-10 bg-primary/10 rounded-xl flex items-center justify-center text-primary">
               <ShoppingCart className="w-5 h-5" />

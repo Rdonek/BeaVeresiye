@@ -95,13 +95,13 @@ export const Dashboard = () => {
       <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="flex flex-col gap-4">
         
         {/* Top Dark Card (Ciro) */}
-        <div className="relative bg-gradient-to-br from-slate-800 to-slate-900 rounded-3xl p-6 sm:p-8 text-white overflow-hidden shadow-xl shadow-slate-900/10">
+        <div className="relative bg-gradient-to-br from-slate-800 to-slate-900 rounded-3xl p-5 sm:p-6 text-white overflow-hidden shadow-xl shadow-slate-900/10">
           <div className="absolute top-0 right-0 w-64 h-64 bg-primary opacity-10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/3"></div>
           
           <div className="relative z-10 flex flex-col gap-1">
-            <h2 className="text-slate-400 text-[11px] sm:text-xs font-bold tracking-[0.15em] uppercase">Bugünkü Kasa (Ciro)</h2>
+            <h2 className="text-slate-400 text-[10px] sm:text-xs font-bold tracking-[0.15em] uppercase">Bugünkü Kasa (Ciro)</h2>
             <div className="flex items-baseline gap-1 mt-1 flex-wrap">
-              <span className="text-4xl sm:text-5xl md:text-6xl font-black tracking-tight break-all">
+              <span className="text-3xl sm:text-4xl font-black tracking-tight break-all">
                 {loading ? "..." : stats.dailySales.toLocaleString('tr-TR', { minimumFractionDigits: 2 })}
               </span>
               <span className="text-xl sm:text-2xl font-bold text-slate-400 ml-1">TL</span>
@@ -164,7 +164,7 @@ export const Dashboard = () => {
             <button onClick={() => navigate('/transactions')} className="text-[11px] font-bold text-primary hover:bg-primary/10 px-3 py-1.5 rounded-full transition-colors uppercase tracking-wider">Tümü</button>
           </div>
           
-          <div className="bg-white rounded-[24px] border border-gray-100 shadow-sm flex flex-col overflow-y-auto overflow-x-hidden max-h-[350px] custom-scrollbar relative">
+          <div className="bg-white rounded-[24px] border border-gray-100 shadow-sm flex flex-col relative">
             {loading ? (
               <div className="p-12 flex justify-center text-gray-300"><Wallet className="w-8 h-8 animate-pulse" /></div>
             ) : recentTxs.length === 0 ? (

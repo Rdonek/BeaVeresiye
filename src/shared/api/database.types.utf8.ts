@@ -1,4 +1,4 @@
-export type Json =
+﻿export type Json =
   | string
   | number
   | boolean
@@ -699,57 +699,6 @@ export type Database = {
           },
         ]
       }
-      network_links: {
-        Row: {
-          created_at: string | null
-          id: string
-          link_code: string
-          receiver_entity_id: string | null
-          receiver_tenant_id: string | null
-          sender_entity_id: string
-          sender_tenant_id: string
-          status: string
-          updated_at: string | null
-        }
-        Insert: {
-          created_at?: string | null
-          id?: string
-          link_code: string
-          receiver_entity_id?: string | null
-          receiver_tenant_id?: string | null
-          sender_entity_id: string
-          sender_tenant_id: string
-          status?: string
-          updated_at?: string | null
-        }
-        Update: {
-          created_at?: string | null
-          id?: string
-          link_code?: string
-          receiver_entity_id?: string | null
-          receiver_tenant_id?: string | null
-          sender_entity_id?: string
-          sender_tenant_id?: string
-          status?: string
-          updated_at?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "network_links_receiver_tenant_id_fkey"
-            columns: ["receiver_tenant_id"]
-            isOneToOne: false
-            referencedRelation: "tenants"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "network_links_sender_tenant_id_fkey"
-            columns: ["sender_tenant_id"]
-            isOneToOne: false
-            referencedRelation: "tenants"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       transactions: {
         Row: {
           amount: number
@@ -765,10 +714,6 @@ export type Database = {
           tenant_id: string
           type: Database["public"]["Enums"]["transaction_type"]
           user_id: string
-          network_link_id: string | null
-          network_source_tenant_id: string | null
-          network_linked_transaction_id: string | null
-          network_read_status: string | null
         }
         Insert: {
           amount: number
@@ -784,10 +729,6 @@ export type Database = {
           tenant_id: string
           type: Database["public"]["Enums"]["transaction_type"]
           user_id: string
-          network_link_id?: string | null
-          network_source_tenant_id?: string | null
-          network_linked_transaction_id?: string | null
-          network_read_status?: string | null
         }
         Update: {
           amount?: number
@@ -803,10 +744,6 @@ export type Database = {
           tenant_id?: string
           type?: Database["public"]["Enums"]["transaction_type"]
           user_id?: string
-          network_link_id?: string | null
-          network_source_tenant_id?: string | null
-          network_linked_transaction_id?: string | null
-          network_read_status?: string | null
         }
         Relationships: [
           {
@@ -819,20 +756,6 @@ export type Database = {
           {
             foreignKeyName: "transactions_tenant_id_fkey"
             columns: ["tenant_id"]
-            isOneToOne: false
-            referencedRelation: "tenants"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "transactions_network_link_id_fkey"
-            columns: ["network_link_id"]
-            isOneToOne: false
-            referencedRelation: "network_links"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "transactions_network_source_tenant_id_fkey"
-            columns: ["network_source_tenant_id"]
             isOneToOne: false
             referencedRelation: "tenants"
             referencedColumns: ["id"]

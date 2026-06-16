@@ -2,7 +2,7 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { supabase } from '@/shared/api/supabase';
 import { useTenant } from '@/app/providers/TenantProvider';
 import { useAuth } from '@/app/providers/AuthProvider';
-import { Filter, ArrowUpRight, ArrowDownRight, ShoppingBag, Calendar, Loader2, Plus, Search, Trash2, Wallet, TrendingUp, TrendingDown } from 'lucide-react';
+import { Filter, ArrowUpRight, ArrowDownRight, ShoppingBag, Calendar, Loader2, Plus, Search, Trash2, Wallet, TrendingUp, TrendingDown, Check, CheckCheck, AlertCircle } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { EmptyState } from '@/shared/ui/EmptyState';
 import { Header } from '@/widgets/Header';
@@ -218,17 +218,17 @@ export const Transactions = () => {
       />
       
       {/* Hero Summary Card */}
-      <div className="bg-gradient-to-br from-gray-900 to-gray-800 rounded-3xl p-6 text-white shadow-xl -mt-2 relative overflow-hidden">
+      <div className="bg-gradient-to-br from-gray-900 to-gray-800 rounded-3xl p-4 sm:p-5 text-white shadow-xl -mt-2 relative overflow-hidden">
         {/* Background decorations */}
         <div className="absolute top-0 right-0 -mt-4 -mr-4 w-24 h-24 bg-white opacity-5 rounded-full blur-2xl"></div>
         <div className="absolute bottom-0 left-0 -mb-4 -ml-4 w-24 h-24 bg-primary opacity-20 rounded-full blur-2xl"></div>
         
-        <div className="relative z-10 flex flex-col items-center text-center mb-6">
-          <p className="text-gray-400 text-xs font-bold uppercase tracking-widest mb-1 flex items-center justify-center gap-1">
+        <div className="relative z-10 flex flex-col items-center text-center mb-4">
+          <p className="text-gray-400 text-[10px] font-bold uppercase tracking-widest mb-1 flex items-center justify-center gap-1">
             <Wallet className="w-3 h-3" /> Net Kasa (Fiziksel)
           </p>
-          <h2 className="text-4xl sm:text-5xl font-extrabold tracking-tight">
-            {summary.net.toLocaleString('tr-TR', { minimumFractionDigits: 2 })} <span className="text-2xl text-gray-400 font-medium">₺</span>
+          <h2 className="text-3xl sm:text-4xl font-extrabold tracking-tight">
+            {summary.net.toLocaleString('tr-TR', { minimumFractionDigits: 2 })} <span className="text-xl text-gray-400 font-medium">₺</span>
           </h2>
           
           {totalAlacak > 0 && (
@@ -241,7 +241,7 @@ export const Transactions = () => {
           )}
         </div>
         
-        <div className="relative z-10 grid grid-cols-2 gap-4 border-t border-gray-700/50 pt-5">
+        <div className="relative z-10 grid grid-cols-2 gap-4 border-t border-gray-700/50 pt-4">
           <div className="flex flex-col items-center justify-center">
             <div className="flex items-center gap-1 text-gray-400 mb-1">
               <TrendingUp className="w-3 h-3 text-success" />
@@ -357,14 +357,14 @@ export const Transactions = () => {
         )}
       </AnimatePresence>
 
-      <GlassCard variant="panel" padding="none" className="max-h-[450px] overflow-y-auto overflow-x-hidden custom-scrollbar border border-gray-100">
+      <GlassCard variant="panel" padding="none" className="border border-gray-100">
         {loading ? (
           <div className="flex items-center justify-center py-20 text-text-tertiary font-subhead flex-col">
             <Loader2 className="animate-spin h-8 w-8 text-primary mb-4" />
             İşlemler Yükleniyor...
           </div>
         ) : filteredTransactions.length === 0 ? (
-          <div className="h-full py-16">
+          <div className="py-8">
             <EmptyState 
               icon={Calendar}
               title={searchQuery ? "Sonuç Bulunamadı" : "İşlem Bulunamadı"}
@@ -382,47 +382,66 @@ export const Transactions = () => {
                   <h4 className="text-xs font-bold text-gray-500 uppercase tracking-wider">{group.title}</h4>
                 </div>
                 <div className="divide-y divide-gray-50">
-                  {group.txs.map((tx) => (
-                    <motion.div 
-                      initial={{ opacity: 0, y: 5 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      key={tx.id}
-                      onClick={() => { setSelectedTx(tx); setIsTxDetailOpen(true); }}
-                      className="px-6 py-4 flex items-center space-x-4 transition-all hover:bg-gray-50 cursor-pointer group"
-                    >
-                      <div className={`h-12 w-12 flex-shrink-0 rounded-2xl flex items-center justify-center transition-transform group-hover:scale-105 ${tx.type === 'sale' ? 'bg-primary/10 text-primary' : tx.type === 'income' ? 'bg-success/10 text-success' : 'bg-danger/10 text-danger'}`}>
-                        {getTypeIcon(tx.type)}
-                      </div>
-                      
-                      <div className="flex-1 min-w-0">
-                        <div className="flex justify-between items-start mb-1">
-                          <p className="font-semibold text-gray-900 capitalize truncate pr-2">
-                            {tx.description || (tx.type === 'sale' ? 'Satış' : tx.type === 'income' ? 'Gelir' : 'Gider')}
-                          </p>
-                          <p className={`font-extrabold text-base flex-shrink-0 ${tx.type === 'expense' ? 'text-danger' : 'text-gray-900'}`}>
-                            {tx.type === 'expense' ? '-' : '+'}{Number(tx.amount).toLocaleString('tr-TR', { minimumFractionDigits: 2 })} ₺
-                          </p>
+                  {group.txs.map((tx) => {
+                    const isExternal = tx.network_source_tenant_id && tx.network_source_tenant_id !== tenantId;
+                    const isMySyncedTx = tx.network_link_id && tx.network_source_tenant_id === tenantId;
+                    
+                    return (
+                      <motion.div 
+                        initial={{ opacity: 0, y: 5 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        key={tx.id}
+                        onClick={() => { setSelectedTx(tx); setIsTxDetailOpen(true); }}
+                        className={`px-6 py-4 flex items-center space-x-4 transition-all hover:bg-gray-50 cursor-pointer group ${isExternal ? 'bg-blue-50/40 border-l-4 border-blue-400' : ''}`}
+                      >
+                        <div className={`h-12 w-12 flex-shrink-0 rounded-2xl flex items-center justify-center transition-transform group-hover:scale-105 ${tx.type === 'sale' ? 'bg-primary/10 text-primary' : tx.type === 'income' ? 'bg-success/10 text-success' : 'bg-danger/10 text-danger'}`}>
+                          {getTypeIcon(tx.type)}
                         </div>
                         
-                        <div className="flex items-center mt-1 text-[13px] font-medium text-gray-500">
-                          <span className="flex-shrink-0 bg-gray-100 text-gray-600 px-2 py-0.5 rounded flex items-center">
-                            {new Date(tx.created_at).toLocaleTimeString('tr-TR', { hour: '2-digit', minute:'2-digit' })}
-                          </span>
-                          <span className="mx-2 text-gray-300">•</span>
-                          <span className="flex-shrink-0">{getPaymentMethodLabel(tx.payment_method)}</span>
+                        <div className="flex-1 min-w-0">
+                          <div className="flex justify-between items-start mb-1">
+                            <div className="flex items-center gap-2 pr-2">
+                              <p className="font-semibold text-gray-900 capitalize truncate">
+                                {tx.description || (tx.type === 'sale' ? 'Satış' : tx.type === 'income' ? 'Gelir' : 'Gider')}
+                              </p>
+                              {isExternal && <span className="px-1.5 py-0.5 text-[10px] font-bold bg-blue-100 text-blue-700 rounded-md whitespace-nowrap">DIŞ AĞ</span>}
+                            </div>
+                            <p className={`font-extrabold text-base flex-shrink-0 ${tx.type === 'expense' ? 'text-danger' : 'text-gray-900'}`}>
+                              {tx.type === 'expense' ? '-' : '+'}{Number(tx.amount).toLocaleString('tr-TR', { minimumFractionDigits: 2 })} ₺
+                            </p>
+                          </div>
                           
-                          {tx.cashier_name && (
-                            <>
-                              <span className="mx-2 text-gray-300">•</span>
-                              <span className="text-primary bg-primary/5 px-2 py-0.5 rounded truncate">
-                                {tx.cashier_name}
-                              </span>
-                            </>
-                          )}
+                          <div className="flex items-center mt-1 text-[13px] font-medium text-gray-500">
+                            <span className="flex-shrink-0 bg-gray-100 text-gray-600 px-2 py-0.5 rounded flex items-center">
+                              {new Date(tx.created_at).toLocaleTimeString('tr-TR', { hour: '2-digit', minute:'2-digit' })}
+                            </span>
+                            <span className="mx-2 text-gray-300">•</span>
+                            <span className="flex-shrink-0">{getPaymentMethodLabel(tx.payment_method)}</span>
+                            
+                            {tx.cashier_name && (
+                              <>
+                                <span className="mx-2 text-gray-300">•</span>
+                                <span className="text-primary bg-primary/5 px-2 py-0.5 rounded truncate">
+                                  {tx.cashier_name}
+                                </span>
+                              </>
+                            )}
+                            
+                            {isMySyncedTx && (
+                              <>
+                                <span className="mx-2 text-gray-300">•</span>
+                                <span className="flex items-center">
+                                  {tx.network_read_status === 'sent' && <Check className="w-3.5 h-3.5 text-gray-400" title="Gönderildi" />}
+                                  {tx.network_read_status === 'read' && <CheckCheck className="w-3.5 h-3.5 text-blue-500" title="Okundu" />}
+                                  {tx.network_read_status === 'disputed' && <AlertCircle className="w-3.5 h-3.5 text-red-500" title="İtiraz Edildi" />}
+                                </span>
+                              </>
+                            )}
+                          </div>
                         </div>
-                      </div>
-                    </motion.div>
-                  ))}
+                      </motion.div>
+                    );
+                  })}
                 </div>
               </div>
             ))}

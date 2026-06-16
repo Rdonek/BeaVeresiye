@@ -160,7 +160,7 @@ export const Inventory = () => {
             <Loader2 className="h-8 w-8 animate-spin text-primary" />
           </div>
         ) : filteredProducts.length === 0 ? (
-          <div className="h-full pt-4">
+          <div className="py-8">
             <EmptyState 
               icon={Package}
               title={search ? 'Sonuç bulunamadı' : 'Henüz ürün yok'}
