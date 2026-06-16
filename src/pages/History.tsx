@@ -49,11 +49,11 @@ export const History = () => {
   const filteredTransactions = useMemo(() => {
     return transactions.filter(tx => {
       // Date Filter
-      if (startDate && new Date(tx.created_at) < new Date(startDate)) return false;
+      if (startDate && new Date(tx.created_at || '') < new Date(startDate)) return false;
       if (endDate) {
         const end = new Date(endDate);
         end.setHours(23, 59, 59, 999);
-        if (new Date(tx.created_at) > end) return false;
+        if (new Date(tx.created_at || '') > end) return false;
       }
       
       // Status Filter
@@ -65,7 +65,7 @@ export const History = () => {
       if (!typeFilters.includes(tx.type)) return false;
       
       // Payment Filter
-      if (!isTxCancelled && !paymentFilters.includes(tx.payment_method)) return false;
+      if (!isTxCancelled && !paymentFilters.includes(tx.payment_method || '')) return false;
 
       // Search Filter
       if (search) {
@@ -101,11 +101,11 @@ export const History = () => {
   };
 
   const exportData = filteredTransactions.map(tx => ({
-    'Tarih': format(new Date(tx.created_at), 'dd.MM.yyyy HH:mm'),
+    'Tarih': format(new Date(tx.created_at || ''), 'dd.MM.yyyy HH:mm'),
     'İşlem Tipi': getTypeLabel(tx.type),
     'Açıklama': tx.description || '-',
     'Müşteri': getCustomerName(tx.customer_id) || '-',
-    'Ödeme Yöntemi': getPaymentMethodLabel(tx.payment_method),
+    'Ödeme Yöntemi': getPaymentMethodLabel(tx.payment_method || ''),
     'Kasiyer': tx.cashier_name || 'Bilinmiyor',
     'Tutar (TL)': Number(tx.amount).toFixed(2),
   }));
@@ -438,16 +438,16 @@ export const History = () => {
                 <div className="md:hidden flex flex-col gap-1.5 pl-12">
                   <p className="text-gray-900 font-medium text-sm leading-snug">{tx.description || '-'}</p>
                   {tx.customer_id && <p className="text-xs text-primary font-bold">👤 {getCustomerName(tx.customer_id)}</p>}
-                  <p className="text-xs text-gray-500 font-semibold">{format(new Date(tx.created_at), 'dd MMM yyyy HH:mm', { locale: tr })}</p>
+                  <p className="text-xs text-gray-500 font-semibold">{format(new Date(tx.created_at || ''), 'dd MMM yyyy HH:mm', { locale: tr })}</p>
                   <div className="flex gap-2 text-[11px] font-bold mt-1 uppercase tracking-wider flex-wrap">
-                    <span className="bg-gray-100 px-2 py-0.5 rounded text-gray-600">{getPaymentMethodLabel(tx.payment_method)}</span>
+                    <span className="bg-gray-100 px-2 py-0.5 rounded text-gray-600">{getPaymentMethodLabel(tx.payment_method || '')}</span>
                     <span className="bg-primary/5 text-primary px-2 py-0.5 rounded">{tx.cashier_name || 'Bilinmiyor'}</span>
                   </div>
                 </div>
 
                 {/* Desktop / Print View */}
                 <div className="hidden md:block md:col-span-2 text-[13px] text-gray-500 font-semibold print:text-black">
-                  {format(new Date(tx.created_at), 'dd.MM.yyyy HH:mm')}
+                  {format(new Date(tx.created_at || ''), 'dd.MM.yyyy HH:mm')}
                 </div>
                 <div className="hidden md:flex md:col-span-4 items-center gap-3 min-w-0">
                   <div className={`h-9 w-9 rounded-xl flex-shrink-0 flex items-center justify-center print:hidden ${tx.type === 'sale' ? 'bg-primary/10 text-primary' : tx.type === 'income' ? 'bg-success/10 text-success' : 'bg-danger/10 text-danger'}`}>
@@ -459,7 +459,7 @@ export const History = () => {
                   </div>
                 </div>
                 <div className="hidden md:block md:col-span-2">
-                  <span className="text-[11px] font-bold bg-gray-100 text-gray-600 px-2 py-1 rounded-md uppercase tracking-wider print:bg-transparent print:p-0 print:text-black">{getPaymentMethodLabel(tx.payment_method)}</span>
+                  <span className="text-[11px] font-bold bg-gray-100 text-gray-600 px-2 py-1 rounded-md uppercase tracking-wider print:bg-transparent print:p-0 print:text-black">{getPaymentMethodLabel(tx.payment_method || '')}</span>
                 </div>
                 <div className="hidden md:block md:col-span-2 text-[13px] font-bold text-gray-700 truncate print:text-black">
                   {tx.cashier_name || 'Bilinmiyor'}
