@@ -518,9 +518,12 @@ export const Customers = () => {
 
                 <div className="mt-2 text-center">
                   <p className="text-xs font-semibold text-gray-400 uppercase tracking-widest mb-1 opacity-80">Toplam Bakiye</p>
-                  <p className={`text-5xl font-black tracking-tighter ${(selectedCustomer.balance ?? 0) > 0 ? 'text-red-400' : 'text-white'}`}>
-                    {(selectedCustomer.balance ?? 0).toLocaleString('tr-TR', {minimumFractionDigits: 2})} <span className="text-2xl font-semibold opacity-70">₺</span>
+                  <p className={`text-5xl font-black tracking-tighter ${(selectedCustomer.balance ?? 0) > 0 ? 'text-red-400' : (selectedCustomer.balance ?? 0) < 0 ? 'text-green-400' : 'text-white'}`}>
+                    {Math.abs(selectedCustomer.balance ?? 0).toLocaleString('tr-TR', {minimumFractionDigits: 2})} <span className="text-2xl font-semibold opacity-70">₺</span>
                   </p>
+                  {(selectedCustomer.balance ?? 0) < 0 && (
+                    <p className="text-green-400 text-xs font-bold mt-1 bg-green-400/10 inline-block px-2 py-0.5 rounded-full">(Müşteri Alacaklı)</p>
+                  )}
                 </div>
                 
                 {/* Action Buttons Float over the bottom edge */}
@@ -591,14 +594,14 @@ export const Customers = () => {
                                   {tx.created_at && new Date(tx.created_at).toLocaleDateString('tr-TR', { month: 'short', day: 'numeric', year: 'numeric' })}
                                 </p>
                               </div>
-                              <div className="text-right relative z-10">
-                                <p className={`text-lg font-black tracking-tight ${isDebt ? 'text-red-600' : 'text-green-600'}`}>
-                                  {isDebt ? '+' : '-'}{tx.amount.toLocaleString('tr-TR')} <span className="text-sm">₺</span>
-                                </p>
-                                <div className="mt-1 inline-flex items-center px-2 py-0.5 rounded-md bg-gray-100 text-[10px] font-bold text-gray-500 uppercase tracking-wider">
-                                  {tx.payment_method === 'cash' ? 'Nakit' : tx.payment_method === 'credit_card' ? 'Kart' : tx.payment_method === 'veresiye' ? 'Açık Hesap' : 'Havale'}
+                                <div className="text-right relative z-10">
+                                  <p className={`text-lg font-black tracking-tight ${isDebt ? 'text-red-600' : 'text-green-600'}`}>
+                                    {tx.amount.toLocaleString('tr-TR')} <span className="text-sm">₺</span>
+                                  </p>
+                                  <div className="mt-1 inline-flex items-center px-2 py-0.5 rounded-md bg-gray-100 text-[10px] font-bold text-gray-500 uppercase tracking-wider">
+                                    {tx.payment_method === 'cash' ? 'Nakit' : tx.payment_method === 'credit_card' ? 'Kart' : tx.payment_method === 'veresiye' ? 'Açık Hesap' : 'Havale'}
+                                  </div>
                                 </div>
-                              </div>
                               
                               {/* Soft background glow based on type */}
                               <div className={`absolute -right-4 -bottom-4 w-16 h-16 rounded-full blur-2xl opacity-20 ${isDebt ? 'bg-red-500' : 'bg-green-500'}`} />
