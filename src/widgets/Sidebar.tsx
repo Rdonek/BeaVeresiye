@@ -1,6 +1,6 @@
 import React from 'react';
 import { NavLink } from 'react-router-dom';
-import { Home, Calculator, PackageSearch, Users, Settings as SettingsIcon, BarChart3, Receipt, Truck, X } from 'lucide-react';
+import { Home, Calculator, PackageSearch, Users, Settings as SettingsIcon, BarChart3, Receipt, Truck, X, List } from 'lucide-react';
 import { useAuth } from '@/app/providers/AuthProvider';
 import { cn } from '@/shared/lib/utils';
 import { motion } from 'framer-motion';
@@ -15,6 +15,7 @@ export const Sidebar = () => {
   const allNavItems = [
     { to: '/', icon: Home, label: 'Özet', requiredPerm: 'dashboard' as const },
     { to: '/transactions', icon: Receipt, label: 'Kasa ve Masraflar', requiredPerm: 'dashboard' as const },
+    { to: '/history', icon: List, label: 'İşlem Geçmişi', requiredPerm: 'dashboard' as const },
     { to: '/pos', icon: Calculator, label: 'Hızlı Satış', requiredPerm: 'pos' as const },
     { to: '/inventory', icon: PackageSearch, label: 'Stok Yönetimi', requiredPerm: 'inventory' as const },
     { to: '/customers', icon: Users, label: 'Veresiye Defteri', requiredPerm: 'customers' as const },

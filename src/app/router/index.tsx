@@ -23,6 +23,7 @@ import { Suppliers } from '@/pages/Suppliers';
 import { Settings } from '@/pages/Settings';
 import { Employees } from '@/pages/Employees';
 import { Transactions } from '@/pages/Transactions';
+import { History } from '@/pages/History';
 import { NotFound } from '@/pages/NotFound';
 
 // Pages - Admin
@@ -97,6 +98,10 @@ export const router = createBrowserRouter([
           {
             path: 'transactions',
             element: <PermissionGuard permission="dashboard"><Transactions /></PermissionGuard>
+          },
+          {
+            path: 'history',
+            element: <PermissionGuard permission="dashboard"><History /></PermissionGuard>
           }
         ]
       }
