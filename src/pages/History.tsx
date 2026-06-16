@@ -30,6 +30,7 @@ export const History = () => {
   const [endDate, setEndDate] = useState('');
   const [typeFilter, setTypeFilter] = useState<'all' | 'income' | 'expense' | 'sale'>('all');
   const [paymentFilter, setPaymentFilter] = useState<'all' | 'cash' | 'credit_card' | 'veresiye'>('all');
+  const [statusFilter, setStatusFilter] = useState<'active' | 'cancelled' | 'all'>('active');
   const [isFilterOpen, setIsFilterOpen] = useState(false);
 
   const [selectedTx, setSelectedTx] = useState<any>(null);
@@ -51,6 +52,11 @@ export const History = () => {
         if (new Date(tx.created_at) > end) return false;
       }
       
+      // Status Filter
+      const isTxCancelled = tx.payment_method === 'cancelled' || tx.description?.startsWith('[İPTAL');
+      if (statusFilter === 'active' && isTxCancelled) return false;
+      if (statusFilter === 'cancelled' && !isTxCancelled) return false;
+
       // Type Filter
       if (typeFilter !== 'all' && tx.type !== typeFilter) return false;
       
@@ -68,7 +74,7 @@ export const History = () => {
 
       return true;
     });
-  }, [transactions, startDate, endDate, typeFilter, paymentFilter, search, customers]);
+  }, [transactions, startDate, endDate, typeFilter, paymentFilter, statusFilter, search, customers]);
 
   const getTypeIcon = (type: string) => {
     if (type === 'sale') return <ShoppingBag className="h-5 w-5 text-primary" />;
@@ -247,7 +253,7 @@ export const History = () => {
               exit={{ height: 0, opacity: 0 }}
               className="overflow-hidden"
             >
-              <GlassCard className="p-5 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+              <GlassCard className="p-5 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
                 <div>
                   <label className="text-[11px] font-bold text-gray-500 uppercase mb-1.5 block tracking-wider">Başlangıç Tarihi</label>
                   <Input type="date" value={startDate} onChange={e => setStartDate(e.target.value)} />
@@ -280,6 +286,18 @@ export const History = () => {
                     <option value="cash">Nakit</option>
                     <option value="credit_card">Kredi Kartı</option>
                     <option value="veresiye">Veresiye</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="text-[11px] font-bold text-gray-500 uppercase mb-1.5 block tracking-wider">Durum</label>
+                  <select 
+                    value={statusFilter}
+                    onChange={(e) => setStatusFilter(e.target.value as any)}
+                    className="w-full h-[42px] px-3 bg-white border border-gray-200 rounded-xl focus:border-primary focus:ring-1 focus:ring-primary outline-none text-sm font-semibold text-gray-700 transition-all shadow-sm"
+                  >
+                    <option value="active">Aktif İşlemler</option>
+                    <option value="cancelled">İptal Edilenler</option>
+                    <option value="all">Tümü (Hepsi)</option>
                   </select>
                 </div>
               </GlassCard>
