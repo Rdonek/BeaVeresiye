@@ -148,11 +148,20 @@ export const Transactions = () => {
   const summary = useMemo(() => {
     let totalIncome = 0;
     let totalExpense = 0;
+    let totalVeresiye = 0;
+    
     filteredTransactions.forEach(tx => {
-      if (tx.type === 'sale' || tx.type === 'income') totalIncome += Number(tx.amount);
-      if (tx.type === 'expense') totalExpense += Number(tx.amount);
+      // Veresiye satışları kasaya giren nakit olarak saymıyoruz
+      if (tx.payment_method === 'veresiye' && tx.type === 'sale') {
+        totalVeresiye += Number(tx.amount);
+      } else if (tx.type === 'sale' || tx.type === 'income') {
+        totalIncome += Number(tx.amount);
+      } else if (tx.type === 'expense') {
+        totalExpense += Number(tx.amount);
+      }
     });
-    return { totalIncome, totalExpense, net: totalIncome - totalExpense };
+    
+    return { totalIncome, totalExpense, totalVeresiye, net: totalIncome - totalExpense };
   }, [filteredTransactions]);
 
   const groupedTransactions = useMemo(() => {
@@ -207,18 +216,27 @@ export const Transactions = () => {
         
         <div className="relative z-10 flex flex-col items-center text-center mb-6">
           <p className="text-gray-400 text-xs font-bold uppercase tracking-widest mb-1 flex items-center justify-center gap-1">
-            <Wallet className="w-3 h-3" /> Net Kasa Bakiye
+            <Wallet className="w-3 h-3" /> Net Kasa (Fiziksel)
           </p>
           <h2 className="text-4xl sm:text-5xl font-extrabold tracking-tight">
             {summary.net.toLocaleString('tr-TR', { minimumFractionDigits: 2 })} <span className="text-2xl text-gray-400 font-medium">₺</span>
           </h2>
+          
+          {summary.totalVeresiye > 0 && (
+            <div className="mt-3 bg-white/5 border border-white/10 rounded-full px-3 py-1 flex items-center gap-2">
+              <span className="w-2 h-2 rounded-full bg-blue-400 animate-pulse"></span>
+              <p className="text-xs text-blue-200 font-medium tracking-wide">
+                Veresiye (Dışarıdaki Para): <span className="font-bold">{summary.totalVeresiye.toLocaleString('tr-TR', { minimumFractionDigits: 2 })} ₺</span>
+              </p>
+            </div>
+          )}
         </div>
         
         <div className="relative z-10 grid grid-cols-2 gap-4 border-t border-gray-700/50 pt-5">
           <div className="flex flex-col items-center justify-center">
             <div className="flex items-center gap-1 text-gray-400 mb-1">
               <TrendingUp className="w-3 h-3 text-success" />
-              <p className="text-[10px] font-bold uppercase tracking-wider">Toplam Giriş</p>
+              <p className="text-[10px] font-bold uppercase tracking-wider">Kasa Girişi (Nakit/Kart)</p>
             </div>
             <p className="text-lg font-bold text-white">
               +{summary.totalIncome.toLocaleString('tr-TR', { minimumFractionDigits: 2 })} ₺
@@ -228,7 +246,7 @@ export const Transactions = () => {
           <div className="flex flex-col items-center justify-center border-l border-gray-700/50">
             <div className="flex items-center gap-1 text-gray-400 mb-1">
               <TrendingDown className="w-3 h-3 text-danger" />
-              <p className="text-[10px] font-bold uppercase tracking-wider">Toplam Çıkış</p>
+              <p className="text-[10px] font-bold uppercase tracking-wider">Kasa Çıkışı</p>
             </div>
             <p className="text-lg font-bold text-white">
               -{summary.totalExpense.toLocaleString('tr-TR', { minimumFractionDigits: 2 })} ₺
