@@ -433,8 +433,8 @@ export const History = () => {
               <p className="text-xs text-red-600 font-semibold leading-relaxed">
                 Bu işlemi silmek kasanızdaki fiziksel nakit miktarını veya müşteri bakiyesini kalıcı olarak etkiler. Yapılan işlemler geri alınamaz, tüm sorumluluk size aittir.
               </p>
-              <Button variant="danger" className="mt-1 w-full h-11" onClick={handleDelete} isLoading={deleteMutation.isPending}>
-                Sorumluluğu Kabul Ediyorum, Sil
+              <Button variant="danger" className="mt-1 w-full h-11" onClick={handleDelete} isLoading={updateMutation.isPending}>
+                Sorumluluğu Kabul Ediyorum, İptal Et
               </Button>
             </div>
           </div>
