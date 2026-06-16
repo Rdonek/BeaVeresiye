@@ -124,8 +124,8 @@ export const Inventory = () => {
       />
 
       {/* Top Bar: Search & Action */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 -mt-2">
-        <div className="w-full md:max-w-md">
+      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 -mt-2">
+        <div className="w-full lg:max-w-md">
           <Input 
             icon={<Search className="w-4 h-4" />} 
             placeholder="Ürün veya barkod ara..." 
@@ -133,7 +133,7 @@ export const Inventory = () => {
             onChange={(e) => setSearch(e.target.value)}
           />
         </div>
-        <div className="flex items-center gap-2 w-full md:w-auto">
+        <div className="flex items-center gap-2 w-full lg:w-auto">
           <Button 
             variant="secondary" 
             onClick={() => setIsImportOpen(true)} 
