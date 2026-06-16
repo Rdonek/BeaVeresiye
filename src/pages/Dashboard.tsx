@@ -38,7 +38,7 @@ export const Dashboard = () => {
         .select('amount')
         .eq('tenant_id', tenantId)
         .eq('type', 'sale')
-        .neq('payment_method', 'cancelled')
+        .neq('status', 'cancelled')
         .gte('created_at', startOfDay.toISOString());
 
       const dailySales = salesData?.reduce((sum, tx) => sum + Number(tx.amount), 0) || 0;
@@ -61,7 +61,7 @@ export const Dashboard = () => {
         .from('transactions')
         .select('*')
         .eq('tenant_id', tenantId)
-        .neq('payment_method', 'cancelled')
+        .neq('status', 'cancelled')
         .order('created_at', { ascending: false })
         .limit(5);
 

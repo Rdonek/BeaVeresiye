@@ -6,7 +6,8 @@ import { useEntities, useUpdateEntityBalance } from '@/shared/hooks/useEntities'
 import { GlassCard } from '@/shared/ui/GlassCard';
 import { Input } from '@/shared/ui/Input';
 import { Button } from '@/shared/ui/Button';
-import { Search, Filter, Download, FileText, Printer, ArrowDownRight, ArrowUpRight, ShoppingBag, Calendar, Loader2, Trash2 } from 'lucide-react';
+import { FilterChip } from '@/shared/ui/FilterChip';
+import { Search, Filter, Download, FileText, Printer, ArrowDownRight, ArrowUpRight, ShoppingBag, Calendar, Loader2, Trash2, CreditCard, Wallet, RotateCcw, CheckCircle2, XCircle, Banknote } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { toast } from 'react-hot-toast';
 import { BottomSheet } from '@/shared/ui/BottomSheet';
@@ -17,6 +18,57 @@ import * as XLSX from 'xlsx';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 
+// ── Filter Configuration ──────────────────────────────────────────────
+interface FilterOption {
+  value: string;
+  label: string;
+  icon?: React.ReactNode;
+}
+
+interface FilterGroup {
+  key: string;
+  label: string;
+  icon: React.ReactNode;
+  options: FilterOption[];
+  defaults: string[];
+}
+
+const FILTER_GROUPS: FilterGroup[] = [
+  {
+    key: 'type',
+    label: 'İşlem Tipi',
+    icon: <ShoppingBag className="w-3.5 h-3.5" />,
+    options: [
+      { value: 'sale', label: 'Satışlar', icon: <ShoppingBag className="w-3.5 h-3.5" /> },
+      { value: 'income', label: 'Tahsilat / Gelir', icon: <ArrowDownRight className="w-3.5 h-3.5" /> },
+      { value: 'expense', label: 'Masraf / Gider', icon: <ArrowUpRight className="w-3.5 h-3.5" /> },
+    ],
+    defaults: ['sale', 'income', 'expense'],
+  },
+  {
+    key: 'payment',
+    label: 'Ödeme Yöntemi',
+    icon: <CreditCard className="w-3.5 h-3.5" />,
+    options: [
+      { value: 'cash', label: 'Nakit', icon: <Banknote className="w-3.5 h-3.5" /> },
+      { value: 'credit_card', label: 'Kredi Kartı', icon: <CreditCard className="w-3.5 h-3.5" /> },
+      { value: 'veresiye', label: 'Veresiye', icon: <Wallet className="w-3.5 h-3.5" /> },
+    ],
+    defaults: ['cash', 'credit_card', 'veresiye'],
+  },
+  {
+    key: 'status',
+    label: 'Durum',
+    icon: <CheckCircle2 className="w-3.5 h-3.5" />,
+    options: [
+      { value: 'active', label: 'Aktif İşlemler', icon: <CheckCircle2 className="w-3.5 h-3.5" /> },
+      { value: 'cancelled', label: 'İptal Edilenler', icon: <XCircle className="w-3.5 h-3.5" /> },
+    ],
+    defaults: ['active'],
+  },
+];
+
+// ── Component ─────────────────────────────────────────────────────────
 export const History = () => {
   const { tenantId, tenantName } = useTenant();
   const { data: transactions = [], isLoading } = useFinanceTransactions(tenantId);
@@ -26,17 +78,46 @@ export const History = () => {
   const updateBalanceMutation = useUpdateEntityBalance();
 
   const [search, setSearch] = useState('');
-  const [typeFilters, setTypeFilters] = useState<string[]>(['sale', 'income', 'expense']);
-  const [paymentFilters, setPaymentFilters] = useState<string[]>(['cash', 'credit_card', 'veresiye']);
-  const [statusFilters, setStatusFilters] = useState<string[]>(['active']);
+  const [typeFilters, setTypeFilters] = useState<string[]>(FILTER_GROUPS[0].defaults);
+  const [paymentFilters, setPaymentFilters] = useState<string[]>(FILTER_GROUPS[1].defaults);
+  const [statusFilters, setStatusFilters] = useState<string[]>(FILTER_GROUPS[2].defaults);
 
-  const toggleFilter = (setFn: React.Dispatch<React.SetStateAction<string[]>>, val: string) => {
-    setFn(prev => prev.includes(val) ? prev.filter(p => p !== val) : [...prev, val]);
+  const filterStateMap: Record<string, { state: string[]; setter: React.Dispatch<React.SetStateAction<string[]>> }> = {
+    type: { state: typeFilters, setter: setTypeFilters },
+    payment: { state: paymentFilters, setter: setPaymentFilters },
+    status: { state: statusFilters, setter: setStatusFilters },
   };
+
+  const toggleFilter = (key: string, val: string) => {
+    const { state, setter } = filterStateMap[key];
+    setter(state.includes(val) ? state.filter(p => p !== val) : [...state, val]);
+  };
+
   const [isFilterOpen, setIsFilterOpen] = useState(false);
 
   const [selectedTx, setSelectedTx] = useState<any>(null);
   const [isDetailOpen, setIsDetailOpen] = useState(false);
+
+  // ── Derived: Active filter count ──
+  const activeFilterCount = useMemo(() => {
+    let count = 0;
+    FILTER_GROUPS.forEach(group => {
+      const { state } = filterStateMap[group.key];
+      const diff = group.defaults.length !== state.length ||
+        !group.defaults.every(d => state.includes(d));
+      if (diff) count++;
+    });
+    return count;
+  }, [typeFilters, paymentFilters, statusFilters]);
+
+  const isFiltersModified = activeFilterCount > 0 || search.length > 0;
+
+  const resetAllFilters = () => {
+    FILTER_GROUPS.forEach(group => {
+      filterStateMap[group.key].setter(group.defaults);
+    });
+    setSearch('');
+  };
 
   const getCustomerName = (id: string | null) => {
     if (!id) return '';
@@ -47,7 +128,7 @@ export const History = () => {
   const filteredTransactions = useMemo(() => {
     return transactions.filter(tx => {
       // Status Filter
-      const isTxCancelled = tx.payment_method === 'cancelled' || tx.description?.startsWith('[İPTAL');
+      const isTxCancelled = tx.status === 'cancelled' || tx.payment_method === 'cancelled' || tx.description?.startsWith('[İPTAL');
       const txStatus = isTxCancelled ? 'cancelled' : 'active';
       if (!statusFilters.includes(txStatus)) return false;
 
@@ -192,8 +273,7 @@ export const History = () => {
         await updateMutation.mutateAsync({ 
           id: selectedTx.id, 
           tenant_id: tenantId,
-          payment_method: 'cancelled',
-          description: `[İPTAL EDİLDİ] ${selectedTx.description || ''}`
+          status: 'cancelled',
         });
 
         toast.success('İşlem başarıyla iptal edildi ve bakiyeler güncellendi.');
@@ -219,9 +299,9 @@ export const History = () => {
         <p className="text-xs text-gray-500 mt-1">Toplam Listelenen İşlem: {filteredTransactions.length}</p>
       </div>
 
-      <div className="flex flex-col gap-4 print:hidden">
-        {/* Filters and Search */}
-        <div className="flex flex-col md:flex-row gap-2">
+      <div className="flex flex-col gap-3 print:hidden">
+        {/* Search & Filter Toggle Row */}
+        <div className="flex items-center gap-2">
           <div className="flex-1">
             <Input 
               icon={<Search className="w-5 h-5 text-gray-400" />}
@@ -230,108 +310,79 @@ export const History = () => {
               onChange={(e) => setSearch(e.target.value)}
             />
           </div>
-          <Button 
+          <button
             onClick={() => setIsFilterOpen(!isFilterOpen)}
-            className={`h-[42px] px-4 flex items-center justify-center rounded-xl transition-all border shadow-sm ${isFilterOpen ? 'bg-primary border-primary text-white' : 'bg-white border-gray-200 text-gray-700 hover:bg-gray-50'}`}
+            className={`relative h-[44px] px-4 flex items-center justify-center gap-2 rounded-xl text-sm font-bold transition-all border active:scale-[0.97] ${
+              isFilterOpen 
+                ? 'bg-primary border-primary text-white shadow-sm' 
+                : 'bg-white border-gray-200 text-text-secondary hover:bg-gray-50 shadow-sm'
+            }`}
           >
-            <Filter className="h-5 w-5 mr-2" />
-            <span className="font-bold">Filtreler</span>
-          </Button>
+            <Filter className="w-4 h-4" />
+            <span className="hidden sm:inline">Filtreler</span>
+            {isFiltersModified && (
+              <span className="absolute -top-1.5 -right-1.5 flex items-center justify-center w-5 h-5 rounded-full bg-danger text-white text-[10px] font-black shadow-sm">
+                {activeFilterCount + (search.length > 0 ? 1 : 0)}
+              </span>
+            )}
+          </button>
         </div>
 
+        {/* Filter Panel */}
         <AnimatePresence>
           {isFilterOpen && (
             <motion.div 
               initial={{ height: 0, opacity: 0 }}
               animate={{ height: 'auto', opacity: 1 }}
               exit={{ height: 0, opacity: 0 }}
+              transition={{ duration: 0.2, ease: 'easeInOut' }}
               className="overflow-hidden"
             >
-              <GlassCard className="p-6">
-                <div className="flex flex-col gap-8">
-                  {/* İşlem Tipi */}
-                  <div>
-                    <h4 className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-3">İşlem Tipi</h4>
-                    <div className="flex flex-wrap gap-2">
-                      {[
-                        { value: 'sale', label: 'Satışlar' },
-                        { value: 'income', label: 'Tahsilat / Gelir' },
-                        { value: 'expense', label: 'Masraf / Gider' }
-                      ].map(opt => (
-                        <button
-                          key={opt.value}
-                          onClick={() => toggleFilter(setTypeFilters, opt.value)}
-                          className={`px-4 py-2 rounded-xl text-sm font-bold transition-all border ${
-                            typeFilters.includes(opt.value)
-                              ? 'bg-primary border-primary text-white shadow-md shadow-primary/20'
-                              : 'bg-white border-gray-200 text-gray-600 hover:border-gray-300 hover:bg-gray-50'
-                          }`}
-                        >
-                          {opt.label}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
+              <GlassCard className="p-0">
+                {/* Panel Header */}
+                <div className="flex items-center justify-between px-5 py-3 border-b border-gray-100">
+                  <p className="text-xs font-bold text-text-tertiary uppercase tracking-wider">
+                    Filtreler
+                    {isFiltersModified && (
+                      <span className="ml-2 inline-flex items-center justify-center px-1.5 py-0.5 rounded-md bg-primary/10 text-primary text-[10px] font-black">
+                        {activeFilterCount + (search.length > 0 ? 1 : 0)} aktif
+                      </span>
+                    )}
+                  </p>
+                  <button
+                    onClick={resetAllFilters}
+                    disabled={!isFiltersModified}
+                    className="inline-flex items-center gap-1 text-xs font-bold text-primary hover:text-primary-hover transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+                  >
+                    <RotateCcw className="w-3 h-3" />
+                    Sıfırla
+                  </button>
+                </div>
 
-                  {/* Ödeme Yöntemi */}
-                  <div>
-                    <h4 className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-3">Ödeme Yöntemi</h4>
-                    <div className="flex flex-wrap gap-2">
-                      {[
-                        { value: 'cash', label: 'Nakit' },
-                        { value: 'credit_card', label: 'Kredi Kartı' },
-                        { value: 'veresiye', label: 'Veresiye (Açık Hesap)' }
-                      ].map(opt => (
-                        <button
-                          key={opt.value}
-                          onClick={() => toggleFilter(setPaymentFilters, opt.value)}
-                          className={`px-4 py-2 rounded-xl text-sm font-bold transition-all border ${
-                            paymentFilters.includes(opt.value)
-                              ? 'bg-primary border-primary text-white shadow-md shadow-primary/20'
-                              : 'bg-white border-gray-200 text-gray-600 hover:border-gray-300 hover:bg-gray-50'
-                          }`}
-                        >
-                          {opt.label}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-
-                  {/* Durum */}
-                  <div>
-                    <div className="flex items-center justify-between mb-3">
-                      <h4 className="text-xs font-bold text-gray-400 uppercase tracking-wider">Durum</h4>
-                      <button 
-                        onClick={() => {
-                          setTypeFilters(['sale', 'income', 'expense']);
-                          setPaymentFilters(['cash', 'credit_card', 'veresiye']);
-                          setStatusFilters(['active']);
-                          setSearch('');
-                        }}
-                        className="text-xs font-bold text-primary hover:text-primary/80 transition-colors"
-                      >
-                        Filtreleri Sıfırla
-                      </button>
-                    </div>
-                    <div className="flex flex-wrap gap-2">
-                      {[
-                        { value: 'active', label: 'Aktif İşlemler' },
-                        { value: 'cancelled', label: 'İptal Edilenler' }
-                      ].map(opt => (
-                        <button
-                          key={opt.value}
-                          onClick={() => toggleFilter(setStatusFilters, opt.value)}
-                          className={`px-4 py-2 rounded-xl text-sm font-bold transition-all border ${
-                            statusFilters.includes(opt.value)
-                              ? 'bg-primary border-primary text-white shadow-md shadow-primary/20'
-                              : 'bg-white border-gray-200 text-gray-600 hover:border-gray-300 hover:bg-gray-50'
-                          }`}
-                        >
-                          {opt.label}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
+                {/* Filter Groups */}
+                <div className="divide-y divide-gray-100">
+                  {FILTER_GROUPS.map((group) => {
+                    const { state } = filterStateMap[group.key];
+                    return (
+                      <div key={group.key} className="px-5 py-4">
+                        <div className="flex items-center gap-1.5 mb-3">
+                          <span className="text-text-tertiary">{group.icon}</span>
+                          <h4 className="text-xs font-bold text-text-tertiary uppercase tracking-wider">{group.label}</h4>
+                        </div>
+                        <div className="flex flex-wrap gap-2">
+                          {group.options.map((opt) => (
+                            <FilterChip
+                              key={opt.value}
+                              label={opt.label}
+                              icon={opt.icon}
+                              isActive={state.includes(opt.value)}
+                              onClick={() => toggleFilter(group.key, opt.value)}
+                            />
+                          ))}
+                        </div>
+                      </div>
+                    );
+                  })}
                 </div>
               </GlassCard>
             </motion.div>
@@ -339,20 +390,23 @@ export const History = () => {
         </AnimatePresence>
 
         {/* Export Buttons */}
-        <div className="flex flex-wrap items-center gap-2">
-          <Button variant="outline" onClick={handleExportExcel} className="bg-white text-green-700 border-green-200 hover:bg-green-50 shadow-sm flex-1 sm:flex-none">
-            <Download className="w-4 h-4 mr-2" /> Excel'e Aktar
+        <div className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-hide">
+          <Button variant="outline" onClick={handleExportExcel} className="bg-white text-success border-success/20 hover:bg-success/5 shadow-sm text-xs h-9 px-3 flex-shrink-0">
+            <Download className="w-3.5 h-3.5 mr-1.5" /> Excel
           </Button>
-          <Button variant="outline" onClick={handleExportPDF} className="bg-white text-red-700 border-red-200 hover:bg-red-50 shadow-sm flex-1 sm:flex-none">
-            <FileText className="w-4 h-4 mr-2" /> PDF İndir
+          <Button variant="outline" onClick={handleExportPDF} className="bg-white text-danger border-danger/20 hover:bg-danger/5 shadow-sm text-xs h-9 px-3 flex-shrink-0">
+            <FileText className="w-3.5 h-3.5 mr-1.5" /> PDF
           </Button>
-          <Button variant="outline" onClick={handlePrint} className="bg-white text-gray-700 border-gray-200 hover:bg-gray-50 shadow-sm flex-1 sm:flex-none">
-            <Printer className="w-4 h-4 mr-2" /> Sayfayı Yazdır
+          <Button variant="outline" onClick={handlePrint} className="bg-white text-text-secondary border-gray-200 hover:bg-gray-50 shadow-sm text-xs h-9 px-3 flex-shrink-0">
+            <Printer className="w-3.5 h-3.5 mr-1.5" /> Yazdır
           </Button>
+          <span className="text-[11px] text-text-tertiary font-medium ml-auto flex-shrink-0">
+            {filteredTransactions.length} işlem listeleniyor
+          </span>
         </div>
       </div>
 
-      <GlassCard variant="panel" padding="none" className="print:shadow-none print:border-none print:bg-transparent mt-2">
+      <GlassCard variant="panel" padding="none" className="print:shadow-none print:border-none print:bg-transparent">
         {isLoading ? (
           <div className="flex items-center justify-center py-20 text-gray-400 font-medium flex-col print:hidden">
             <Loader2 className="animate-spin h-8 w-8 text-primary mb-4" />
@@ -378,7 +432,7 @@ export const History = () => {
             </div>
 
             {filteredTransactions.map((tx) => {
-              const isCancelled = tx.payment_method === 'cancelled' || tx.description?.startsWith('[İPTAL');
+              const isCancelled = tx.status === 'cancelled' || tx.payment_method === 'cancelled' || tx.description?.startsWith('[İPTAL');
               return (
               <div 
                 key={tx.id} 
@@ -399,7 +453,10 @@ export const History = () => {
                 </div>
                 
                 <div className="md:hidden flex flex-col gap-1.5 pl-12">
-                  <p className="text-gray-900 font-medium text-sm leading-snug">{tx.description || '-'}</p>
+                  <div className="flex flex-wrap items-center gap-2">
+                    <p className="text-gray-900 font-medium text-sm leading-snug">{tx.description?.replace('[İPTAL EDİLDİ] ', '') || '-'}</p>
+                    {isCancelled && <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-black bg-danger/10 text-danger border border-danger/20 print:border-black print:text-black print:bg-transparent">İPTAL EDİLDİ</span>}
+                  </div>
                   {tx.customer_id && <p className="text-xs text-primary font-bold">👤 {getCustomerName(tx.customer_id)}</p>}
                   <p className="text-xs text-gray-500 font-semibold">{format(new Date(tx.created_at || ''), 'dd MMM yyyy HH:mm', { locale: tr })}</p>
                   <div className="flex gap-2 text-[11px] font-bold mt-1 uppercase tracking-wider flex-wrap">
@@ -417,7 +474,10 @@ export const History = () => {
                     {getTypeIcon(tx.type)}
                   </div>
                   <div className="min-w-0">
-                    <p className="font-bold text-gray-900 text-sm truncate print:text-black">{tx.description || getTypeLabel(tx.type)}</p>
+                    <div className="flex items-center gap-2">
+                      <p className="font-bold text-gray-900 text-sm truncate print:text-black">{tx.description?.replace('[İPTAL EDİLDİ] ', '') || getTypeLabel(tx.type)}</p>
+                      {isCancelled && <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-black bg-danger/10 text-danger border border-danger/20 print:border-black print:text-black print:bg-transparent">İPTAL EDİLDİ</span>}
+                    </div>
                     {tx.customer_id && <p className="text-[11px] text-primary font-bold truncate">Müşteri: {getCustomerName(tx.customer_id)}</p>}
                   </div>
                 </div>
