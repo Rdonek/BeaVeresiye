@@ -239,8 +239,8 @@ export const Pos = () => {
                     </div>
 
                     {/* Stock Badge Corner */}
-                    <div className={`absolute top-0 right-0 rounded-bl-xl rounded-tr-2xl px-2 py-0.5 text-[10px] font-bold border-b border-l ${p.stock_quantity && p.stock_quantity > 0 ? 'bg-green-50 border-green-100 text-green-600' : 'bg-red-50 border-red-100 text-red-600'}`}>
-                      Stok: {p.stock_quantity || 0}
+                    <div className={`absolute top-0 right-0 rounded-bl-xl rounded-tr-2xl px-2 py-0.5 text-[10px] font-bold border-b border-l ${p.stock_quantity === null ? 'bg-blue-50 border-blue-100 text-blue-600' : (p.stock_quantity > 0 ? 'bg-green-50 border-green-100 text-green-600' : 'bg-red-50 border-red-100 text-red-600')}`}>
+                      {p.stock_quantity === null ? 'Sınırsız' : `Stok: ${p.stock_quantity}`}
                     </div>
                   </div>
                 ))}

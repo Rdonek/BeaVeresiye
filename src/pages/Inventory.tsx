@@ -4,9 +4,10 @@ import { useTenant } from '@/app/providers/TenantProvider';
 import { Input } from '@/shared/ui/Input';
 import { BottomSheet } from '@/shared/ui/BottomSheet';
 import { Button } from '@/shared/ui/Button';
-import { Search, Package, Plus, ChevronRight, Edit, Trash2, ArrowUpRight, ArrowDownLeft, X, Loader2, FileSpreadsheet } from 'lucide-react';
+import { Search, Package, Plus, ChevronRight, Edit, Trash2, ArrowUpRight, ArrowDownLeft, X, Loader2, FileSpreadsheet, Calculator } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { EmptyState } from '@/shared/ui/EmptyState';
+import { useNavigate } from 'react-router-dom';
 import { ExcelImportModal } from '@/widgets/ExcelImportModal';
 import { useInventory, useAddProduct, useUpdateProduct, useDeleteProduct } from '@/shared/hooks/useInventory';
 import type { Product } from '@/shared/hooks/useInventory';
@@ -15,6 +16,7 @@ import { GlassCard as Card } from '@/shared/ui/GlassCard';
 
 export const Inventory = () => {
   const { tenantId } = useTenant();
+  const navigate = useNavigate();
   
   const { data: products = [], isLoading: loading } = useInventory(tenantId);
   const addProductMutation = useAddProduct();
@@ -120,6 +122,14 @@ export const Inventory = () => {
           />
         </div>
         <div className="flex items-center gap-2 w-full md:w-auto">
+          <Button 
+            variant="outline" 
+            onClick={() => navigate('/pos')} 
+            className="flex-1 md:flex-none border-primary/20 text-primary hover:bg-primary/5"
+          >
+            <Calculator className="h-4 w-4 mr-2" />
+            Hızlı Satışa Git
+          </Button>
           <Button 
             variant="secondary" 
             onClick={() => setIsImportOpen(true)} 
