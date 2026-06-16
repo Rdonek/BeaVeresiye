@@ -121,24 +121,26 @@ export const Inventory = () => {
             onChange={(e) => setSearch(e.target.value)}
           />
         </div>
-        <div className="flex items-center gap-2 w-full md:w-auto">
+        <div className="flex flex-wrap items-center gap-2 w-full md:w-auto">
           <Button 
             variant="outline" 
             onClick={() => navigate('/pos')} 
-            className="flex-1 md:flex-none border-primary/20 text-primary hover:bg-primary/5"
+            className="flex-1 md:flex-none border-primary/20 text-primary hover:bg-primary/5 min-w-[120px]"
           >
-            <Calculator className="h-4 w-4 mr-2" />
-            Hızlı Satışa Git
+            <Calculator className="h-4 w-4 mr-1 sm:mr-2" />
+            <span className="hidden sm:inline">Hızlı Satışa Git</span>
+            <span className="inline sm:hidden">POS</span>
           </Button>
           <Button 
             variant="secondary" 
             onClick={() => setIsImportOpen(true)} 
-            className="flex-1 md:flex-none border-gray-200"
+            className="flex-1 md:flex-none border-gray-200 min-w-[120px]"
           >
-            <FileSpreadsheet className="h-4 w-4 mr-2 text-green-600" />
-            İçe Aktar
+            <FileSpreadsheet className="h-4 w-4 mr-1 sm:mr-2 text-green-600" />
+            <span className="hidden sm:inline">İçe Aktar</span>
+            <span className="inline sm:hidden">Excel</span>
           </Button>
-          <Button onClick={() => openModal()} className="flex-1 md:flex-none">
+          <Button onClick={() => openModal()} className="w-full sm:flex-1 md:flex-none md:w-auto mt-1 md:mt-0">
             <Plus className="h-4 w-4 mr-2" />
             Yeni Ürün
           </Button>
