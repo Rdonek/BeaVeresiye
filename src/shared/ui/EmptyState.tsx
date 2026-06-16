@@ -1,8 +1,8 @@
 import React from 'react';
 import type { LucideIcon } from 'lucide-react';
-import { motion } from 'framer-motion';
+import { Button } from './Button';
 
-interface EmptyStateProps {
+interface EmptyStateProps extends React.HTMLAttributes<HTMLDivElement> {
   icon: LucideIcon;
   title: string;
   description: string;
@@ -11,34 +11,37 @@ interface EmptyStateProps {
   actionIcon?: LucideIcon;
 }
 
-export const EmptyState: React.FC<EmptyStateProps> = ({ 
+export const EmptyState = React.forwardRef<HTMLDivElement, EmptyStateProps>(({ 
   icon: Icon, 
   title, 
   description, 
   actionLabel, 
   onAction,
-  actionIcon: ActionIcon
-}) => {
+  actionIcon: ActionIcon,
+  className,
+  ...props
+}, ref) => {
   return (
-    <div className="flex flex-col items-center justify-center py-12 px-6 sm:px-12 min-h-[300px] text-center bg-white rounded-3xl border border-gray-100 shadow-sm animate-in fade-in slide-in-from-bottom-4 duration-500 w-full">
-      <div className="w-20 h-20 bg-gray-50 rounded-full flex items-center justify-center mb-6 shadow-inner">
-        <Icon className="w-10 h-10 text-gray-300" />
+    <div ref={ref} className={`h-full flex flex-col items-center justify-center text-center p-8 bg-transparent ${className}`} {...props}>
+      <div className="w-20 h-20 bg-glass-highlight rounded-full flex items-center justify-center mb-4">
+        <Icon className="w-10 h-10 text-text-tertiary" />
       </div>
-      
-      <h3 className="text-xl font-bold text-gray-900 mb-2">{title}</h3>
-      <p className="text-[15px] font-medium text-gray-500 max-w-sm mb-8 leading-relaxed">
+      <h3 className="text-title-2 text-text-primary mb-2">{title}</h3>
+      <p className="text-body text-text-secondary max-w-sm mb-6">
         {description}
       </p>
 
       {actionLabel && onAction && (
-        <button 
+        <Button 
           onClick={onAction}
-          className="flex items-center justify-center gap-2 bg-primary hover:bg-primary/90 text-white font-bold px-6 py-3.5 rounded-2xl transition-all hover:scale-105 shadow-lg shadow-primary/25 active:scale-95"
+          variant="primary"
+          size="md"
         >
-          {ActionIcon && <ActionIcon className="w-5 h-5" />}
+          {ActionIcon && <ActionIcon className="w-5 h-5 mr-2" />}
           {actionLabel}
-        </button>
+        </Button>
       )}
     </div>
   );
-};
+});
+EmptyState.displayName = 'EmptyState';

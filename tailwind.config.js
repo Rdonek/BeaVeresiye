@@ -50,10 +50,22 @@ export default {
           light: '#FEF3C7',
           text: '#92400E',
         },
+        info: {
+          DEFAULT: '#3B82F6',
+          light: '#DBEAFE',
+          text: '#1E40AF',
+        },
         text: {
           primary: '#111827',
-          secondary: '#4B5563',
-          tertiary: '#6B7280',
+          secondary: '#333333',
+          tertiary: '#555555',
+        },
+        hero: {
+          bg: '#0F172A', // Slate 900 (Belirgin lacivert, tam siyah değil)
+          surface: '#1E293B', // Slate 800
+          border: '#334155', // Slate 700
+          text: '#FFFFFF',
+          muted: '#94A3B8', // Slate 400
         }
       },
       fontSize: {
@@ -64,6 +76,7 @@ export default {
         'body': ['16px', { lineHeight: '24px', fontWeight: '400' }],
         'subhead': ['14px', { lineHeight: '20px', fontWeight: '500' }],
         'caption': ['12px', { lineHeight: '16px', fontWeight: '500' }],
+        'micro': ['10px', { lineHeight: '14px', fontWeight: '500' }],
       },
       borderRadius: {
         'sm': '4px',
@@ -80,8 +93,8 @@ export default {
         'glass-inset': 'inset 0 2px 4px 0 rgba(0, 0, 0, 0.05)',
       },
       backdropBlur: {
-        'glass': '0px',
-        'glass-heavy': '0px',
+        'glass': '8px',
+        'glass-heavy': '16px',
       }
     },
   },

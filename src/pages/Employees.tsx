@@ -10,6 +10,7 @@ import { Header } from '@/widgets/Header';
 import { GlassCard } from '@/shared/ui/GlassCard';
 import { motion } from 'framer-motion';
 import { useEmployees } from '@/shared/hooks/useEmployees';
+import { DataList } from '@/shared/ui/DataList';
 
 export const Employees = () => {
   const { tenantId } = useTenant();
@@ -105,28 +106,41 @@ export const Employees = () => {
   };
 
   const PermCheckbox = ({ label, field }: { label: string, field: keyof typeof perms }) => (
-    <button 
+    <Button 
+      variant="secondary"
+      fullWidth
       onClick={() => togglePerm(field)}
-      className="flex items-center justify-between w-full p-4 bg-white border border-gray-200 rounded-md hover:bg-gray-50 transition-colors shadow-sm"
+      className={`justify-between py-3 px-4 h-auto ${perms[field] ? 'border-primary/50 shadow-sm' : ''}`}
     >
-      <span className="font-semibold text-gray-900">{label}</span>
-      {perms[field] ? <CheckSquare className="h-6 w-6 text-primary" /> : <Square className="h-6 w-6 text-gray-400" />}
-    </button>
+      <span className="font-semibold text-text-primary">{label}</span>
+      {perms[field] ? <CheckSquare className="h-5 w-5 text-primary" /> : <Square className="h-5 w-5 text-text-tertiary" />}
+    </Button>
   );
 
   return (
-    <div className="flex flex-col gap-6">
-      <Header 
-        title="Personel ve Roller" 
-        subtitle="Personelinizi ve yetkilerini yönetin."
-        backTo="/settings"
-      />
+    <div className="flex flex-col h-full overflow-hidden w-full max-w-[1600px] mx-auto gap-4">
+      <div className="shrink-0 flex flex-col gap-4">
+        <Header 
+          title="Personel ve Roller" 
+          subtitle="Personelinizi ve yetkilerini yönetin."
+          backTo="/settings"
+          rightElement={
+            <Button 
+              variant="secondary"
+              size="icon"
+              onClick={openAddModal}
+            >
+              <UserPlus className="w-5 h-5" />
+            </Button>
+          }
+        />
+      </div>
 
-      <GlassCard variant="panel" padding="sm" className="min-h-[50vh] flex flex-col gap-4">
+      <DataList>
         {isLoading ? (
           <div className="animate-pulse space-y-4">
-            <div className="h-24 bg-white/30 rounded-2xl w-full"></div>
-            <div className="h-24 bg-white/30 rounded-2xl w-full"></div>
+            <div className="h-24 bg-system-surface/30 rounded-2xl w-full"></div>
+            <div className="h-24 bg-system-surface/30 rounded-2xl w-full"></div>
           </div>
         ) : employees.length === 0 ? (
           <div className="text-center py-10 opacity-60">
@@ -134,48 +148,51 @@ export const Employees = () => {
             <p className="font-headline text-text-secondary">Henüz kayıtlı personel yok.</p>
           </div>
         ) : (
-          employees.map((emp: any) => (
-            <motion.div 
-              key={emp.id} 
-              whileHover={{ y: -2 }}
-              className="bg-white p-5 rounded-lg shadow-sm border border-gray-200 relative"
-            >
-              <div className="absolute top-5 right-5 flex items-center space-x-2">
-                <button 
-                  onClick={() => openEditModal(emp)}
-                  className="h-8 w-8 flex items-center justify-center rounded-md bg-primary/5 hover:bg-primary/10 text-primary transition-colors border border-primary/20"
-                >
-                  <Edit2 className="h-4 w-4" />
-                </button>
-                <button 
-                  onClick={() => handleDelete(emp.id)}
-                  className="h-8 w-8 flex items-center justify-center rounded-md bg-red-50 hover:bg-red-100 text-red-600 transition-colors border border-red-100"
-                >
-                  <Trash2 className="h-4 w-4" />
-                </button>
-              </div>
-              <h3 className="font-bold text-gray-900 mb-1 pr-24">{emp.name}</h3>
-              <p className="text-sm text-gray-500 mb-4">{emp.phone}</p>
-              
-              <div className="flex flex-wrap gap-2">
-                {(emp.permissions as any)?.pos && <span className="px-3 py-1 bg-primary/10 text-primary text-xs font-bold rounded-lg border border-primary/20">POS</span>}
-                {(emp.permissions as any)?.inventory && <span className="px-3 py-1 bg-success/10 text-success text-xs font-bold rounded-lg border border-success/20">Inventory</span>}
-                {(emp.permissions as any)?.customers && <span className="px-3 py-1 bg-warning/10 text-warning text-xs font-bold rounded-lg border border-warning/20">Customers</span>}
-                {(emp.permissions as any)?.dashboard && <span className="px-3 py-1 bg-info/10 text-info text-xs font-bold rounded-lg border border-info/20">Dashboard</span>}
-              </div>
-            </motion.div>
-          ))
-        )}
-      </GlassCard>
+          <div className="divide-y divide-system-border/50">
+            {employees.map((emp: any) => (
+              <motion.div 
+                key={emp.id} 
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="p-4 sm:px-6 hover:bg-glass-highlight transition-colors flex items-center justify-between group"
+              >
+                <div>
+                  <h3 className="font-semibold text-text-primary text-body mb-1">{emp.name}</h3>
+                  <p className="text-caption text-text-secondary mb-3">{emp.phone || 'Telefon Yok'}</p>
+                  
+                  <div className="flex flex-wrap gap-2">
+                    {(emp.permissions as any)?.pos && <span className="px-2 py-0.5 bg-primary/10 text-primary text-micro font-bold rounded-md border border-primary/20">POS</span>}
+                    {(emp.permissions as any)?.inventory && <span className="px-2 py-0.5 bg-success/10 text-success text-micro font-bold rounded-md border border-success/20">STOK</span>}
+                    {(emp.permissions as any)?.customers && <span className="px-2 py-0.5 bg-warning/10 text-warning text-micro font-bold rounded-md border border-warning/20">MÜŞTERİ</span>}
+                    {(emp.permissions as any)?.dashboard && <span className="px-2 py-0.5 bg-info/10 text-info text-micro font-bold rounded-md border border-info/20">ÖZET</span>}
+                  </div>
+                </div>
 
-      <div className="fixed bottom-24 lg:bottom-10 left-0 right-0 p-4 z-20 flex justify-center pointer-events-none">
-        <div className="w-full max-w-md pointer-events-auto">
-          <Button fullWidth size="lg" className="shadow-lg" onClick={openAddModal}>
-            <UserPlus className="h-5 w-5 mr-2" />
-            Yeni Personel Ekle
-          </Button>
-        </div>
-      </div>
+                <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                  <Button 
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => openEditModal(emp)}
+                    title="Düzenle"
+                    className="text-primary hover:bg-primary/10"
+                  >
+                    <Edit2 className="h-5 w-5" />
+                  </Button>
+                  <Button 
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => handleDelete(emp.id)}
+                    title="Sil"
+                    className="text-danger hover:bg-danger/10"
+                  >
+                    <Trash2 className="h-5 w-5" />
+                  </Button>
+                </div>
+              </motion.div>
+            ))}
+          </div>
+        )}
+      </DataList>
 
       <BottomSheet isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} title={editingId ? "Personeli Düzenle" : "Yeni Personel Kaydı"}>
         <div className="space-y-6 pt-2 pb-8">

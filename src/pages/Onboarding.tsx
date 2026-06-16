@@ -108,7 +108,7 @@ export const Onboarding = () => {
   };
 
   return (
-    <div className="flex min-h-screen flex-col items-center justify-center relative bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
+    <div className="flex min-h-screen flex-col items-center justify-center relative bg-system-bg py-12 px-4 sm:px-6 lg:px-8">
       
       {/* Logout Button */}
       <div className="absolute top-4 right-4 sm:top-6 sm:right-6">
@@ -117,7 +117,7 @@ export const Onboarding = () => {
             await signOut();
             navigate('/login');
           }}
-          className="flex items-center gap-2 text-sm font-medium text-gray-500 hover:text-gray-900 transition-colors bg-white px-4 py-2 rounded-full shadow-sm border border-gray-200"
+          className="flex items-center gap-2 text-subhead font-medium text-text-secondary hover:text-text-primary transition-colors bg-system-surface px-4 py-2 rounded-full shadow-sm border border-system-border"
         >
           <LogOut className="h-4 w-4" />
           Çıkış Yap
@@ -131,85 +131,85 @@ export const Onboarding = () => {
         className="w-full max-w-md"
       >
         <div className="text-center mb-8">
-          <div className="mx-auto h-16 w-16 rounded-2xl bg-white shadow-sm flex items-center justify-center border border-gray-200 p-2 mb-4">
+          <div className="mx-auto h-16 w-16 rounded-2xl bg-system-surface shadow-sm flex items-center justify-center border border-system-border p-2 mb-4">
             <img src="/bidefter_icon.svg" alt="Bidefter" className="w-full h-full object-contain" />
           </div>
-          <h2 className="text-3xl font-bold text-gray-900 tracking-tight">İşletmenizi Kurun</h2>
-          <p className="mt-2 text-sm text-gray-500">15 saniyede veresiye defterinizi oluşturun.</p>
+          <h2 className="text-title-1 font-bold text-text-primary tracking-tight">İşletmenizi Kurun</h2>
+          <p className="mt-2 text-body text-text-secondary">15 saniyede veresiye defterinizi oluşturun.</p>
         </div>
 
-        <Card padding="lg" className="w-full shadow-xl border-gray-200 bg-white">
+        <Card padding="lg" className="w-full shadow-xl">
           <form onSubmit={handleSubmit} className="space-y-5">
             
             <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-1">Adınız Soyadınız</label>
+              <label className="block text-sm font-semibold text-text-secondary mb-1">Adınız Soyadınız</label>
               <div className="relative">
                 <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
-                  <User className="h-5 w-5 text-gray-400" />
+                  <User className="h-5 w-5 text-text-tertiary" />
                 </div>
                 <input
                   type="text"
                   required
                   value={formData.ownerName}
                   onChange={(e) => setFormData({ ...formData, ownerName: e.target.value })}
-                  className="block w-full rounded-md border border-gray-300 py-3 pl-10 pr-3 text-gray-900 placeholder:text-gray-400 focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary sm:text-sm shadow-sm"
+                  className="block w-full rounded-md border border-gray-300 py-3 pl-10 pr-3 text-text-primary placeholder:text-text-tertiary focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary sm:text-sm shadow-sm"
                   placeholder="Ahmet Yılmaz"
                 />
               </div>
             </div>
 
             <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-1">İşletme Adı</label>
+              <label className="block text-sm font-semibold text-text-secondary mb-1">İşletme Adı</label>
               <div className="relative">
                 <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
-                  <Store className="h-5 w-5 text-gray-400" />
+                  <Store className="h-5 w-5 text-text-tertiary" />
                 </div>
                 <input
                   type="text"
                   required
                   value={formData.businessName}
                   onChange={(e) => setFormData({ ...formData, businessName: e.target.value })}
-                  className="block w-full rounded-md border border-gray-300 py-3 pl-10 pr-3 text-gray-900 placeholder:text-gray-400 focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary sm:text-sm shadow-sm"
+                  className="block w-full rounded-md border border-gray-300 py-3 pl-10 pr-3 text-text-primary placeholder:text-text-tertiary focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary sm:text-sm shadow-sm"
                   placeholder="Yılmaz Bakkal"
                 />
               </div>
             </div>
 
             <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-1">Telefon Numarası</label>
+              <label className="block text-sm font-semibold text-text-secondary mb-1">Telefon Numarası</label>
               <div className="relative">
                 <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
-                  <Phone className="h-5 w-5 text-gray-400" />
+                  <Phone className="h-5 w-5 text-text-tertiary" />
                 </div>
                 <input
                   type="tel"
                   required
                   value={formData.phone}
                   onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                  className="block w-full rounded-md border border-gray-300 py-3 pl-10 pr-3 text-gray-900 placeholder:text-gray-400 focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary sm:text-sm shadow-sm"
+                  className="block w-full rounded-md border border-gray-300 py-3 pl-10 pr-3 text-text-primary placeholder:text-text-tertiary focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary sm:text-sm shadow-sm"
                   placeholder="05XX XXX XX XX"
                 />
               </div>
             </div>
 
             <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-1">İşletme Türü</label>
+              <label className="block text-sm font-semibold text-text-secondary mb-1">İşletme Türü</label>
               <div className="relative">
                 <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
-                  <Tag className="h-5 w-5 text-gray-400" />
+                  <Tag className="h-5 w-5 text-text-tertiary" />
                 </div>
                 <select
                   required
                   value={formData.category}
                   onChange={(e) => setFormData({ ...formData, category: e.target.value })}
-                  className="block w-full rounded-md border border-gray-300 py-3 pl-10 pr-10 text-gray-900 focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary sm:text-sm shadow-sm appearance-none bg-white"
+                  className="block w-full rounded-md border border-gray-300 py-3 pl-10 pr-10 text-text-primary focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary sm:text-sm shadow-sm appearance-none bg-system-surface"
                 >
                   {categories.map((cat) => (
                     <option key={cat} value={cat}>{cat}</option>
                   ))}
                 </select>
                 <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-3">
-                  <svg className="h-4 w-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7"></path></svg>
+                  <svg className="h-4 w-4 text-text-tertiary" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7"></path></svg>
                 </div>
               </div>
             </div>

@@ -4,9 +4,12 @@ import { useTenant } from '@/app/providers/TenantProvider';
 import { useAuth } from '@/app/providers/AuthProvider';
 import { Filter, ArrowUpRight, ArrowDownRight, ShoppingBag, Calendar, Loader2, Plus, Search, Trash2, Wallet, TrendingUp, TrendingDown, Check, CheckCheck, AlertCircle } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { EmptyState } from '@/shared/ui/EmptyState';
 import { Header } from '@/widgets/Header';
-import { GlassCard } from '@/shared/ui/GlassCard';
+import { EmptyState } from '@/shared/ui/EmptyState';
+import { GlassCard as Card, GlassCard } from '@/shared/ui/GlassCard';
+import { DataList } from '@/shared/ui/DataList';
+import { FilterChip } from '@/shared/ui/FilterChip';
+import { HeroCard } from '@/shared/ui/HeroCard';
 import { Button } from '@/shared/ui/Button';
 import { Input } from '@/shared/ui/Input';
 import { BottomSheet } from '@/shared/ui/BottomSheet';
@@ -27,6 +30,9 @@ interface Transaction {
   cashier_name?: string;
   tenant_id?: string;
   status?: string;
+  network_source_tenant_id?: string;
+  network_link_id?: string;
+  network_read_status?: string;
 }
 
 export const Transactions = () => {
@@ -198,9 +204,9 @@ export const Transactions = () => {
   }, [filteredTransactions]);
 
   const getTypeIcon = (type: string) => {
-    if (type === 'sale') return <ShoppingBag className="h-5 w-5 text-primary" />;
-    if (type === 'income') return <ArrowDownRight className="h-5 w-5 text-success" />;
-    if (type === 'expense') return <ArrowUpRight className="h-5 w-5 text-danger" />;
+    if (type === 'sale') return <ShoppingBag className="h-6 w-6 text-primary" />;
+    if (type === 'income') return <ArrowDownRight className="h-6 w-6 text-success" />;
+    if (type === 'expense') return <ArrowUpRight className="h-6 w-6 text-danger" />;
     return null;
   };
 
@@ -211,257 +217,251 @@ export const Transactions = () => {
   };
 
   return (
-    <div className="flex flex-col gap-6 w-full">
+    <div className="flex flex-col h-full w-full gap-4 lg:gap-6 pb-2 overflow-hidden">
       <Header 
         title="Kasa ve Masraflar" 
         subtitle="Tüm nakit giriş ve çıkışları"
       />
       
-      {/* Hero Summary Card */}
-      <div className="bg-gradient-to-br from-gray-900 to-gray-800 rounded-3xl p-4 sm:p-5 text-white shadow-xl -mt-2 relative overflow-hidden">
-        {/* Background decorations */}
-        <div className="absolute top-0 right-0 -mt-4 -mr-4 w-24 h-24 bg-white opacity-5 rounded-full blur-2xl"></div>
-        <div className="absolute bottom-0 left-0 -mb-4 -ml-4 w-24 h-24 bg-primary opacity-20 rounded-full blur-2xl"></div>
-        
-        <div className="relative z-10 flex flex-col items-center text-center mb-4">
-          <p className="text-gray-400 text-[10px] font-bold uppercase tracking-widest mb-1 flex items-center justify-center gap-1">
-            <Wallet className="w-3 h-3" /> Net Kasa (Fiziksel)
-          </p>
-          <h2 className="text-3xl sm:text-4xl font-extrabold tracking-tight">
-            {summary.net.toLocaleString('tr-TR', { minimumFractionDigits: 2 })} <span className="text-xl text-gray-400 font-medium">₺</span>
-          </h2>
+      <div className="flex flex-col gap-4 lg:gap-6 shrink-0">
           
-          {totalAlacak > 0 && (
-            <div className="mt-3 bg-white/5 border border-white/10 rounded-full px-3 py-1 flex items-center gap-2">
-              <span className="w-2 h-2 rounded-full bg-blue-400 animate-pulse"></span>
-              <p className="text-xs text-blue-200 font-medium tracking-wide">
-                Piyasada Bekleyen Alacak: <span className="font-bold">{totalAlacak.toLocaleString('tr-TR', { minimumFractionDigits: 2 })} ₺</span>
-              </p>
+        {/* Hero Summary Card */}
+          <HeroCard>
+            <HeroCard.Header 
+              title="Net Kasa (Fiziksel)" 
+              value={summary.net.toLocaleString('tr-TR', { minimumFractionDigits: 2 })} 
+              unit="TL" 
+              icon={<Wallet className="w-3.5 h-3.5" />}
+              extra={
+                totalAlacak > 0 && (
+                  <div className="mt-3 bg-system-bg border border-system-border rounded-xl px-3 py-1.5 flex items-center gap-2">
+                    <span className="w-2 h-2 rounded-full bg-info shadow-sm animate-pulse"></span>
+                    <p className="text-caption text-hero-muted font-medium tracking-wide">
+                      Piyasada Bekleyen: <span className="font-bold text-hero-text">{totalAlacak.toLocaleString('tr-TR', { minimumFractionDigits: 2 })} TL</span>
+                    </p>
+                  </div>
+                )
+              }
+            />
+            <HeroCard.Grid>
+              <HeroCard.Stat 
+                title="Kasa Girişi" 
+                value={`+${summary.totalIncome.toLocaleString('tr-TR', { minimumFractionDigits: 2 })}`} 
+                unit="TL" 
+                icon={<TrendingUp className="w-3 h-3 text-success" />}
+              />
+              <HeroCard.Stat 
+                title="Kasa Çıkışı" 
+                value={`-${summary.totalExpense.toLocaleString('tr-TR', { minimumFractionDigits: 2 })}`} 
+                unit="TL" 
+                icon={<TrendingDown className="w-3 h-3 text-danger" />}
+                isRight={true}
+              />
+            </HeroCard.Grid>
+          </HeroCard>
+
+          <div className="grid grid-cols-2 lg:grid-cols-3 gap-3">
+            {/* Action Buttons */}
+            <Button 
+              onClick={() => { setTxAmount(''); setTxDesc(''); setIsAddIncomeOpen(true); }}
+              variant="secondary"
+              size="sm"
+              fullWidth
+            >
+              <ArrowDownRight className="w-4 h-4 mr-1.5 text-success" />
+              Gelir Ekle
+            </Button>
+            <Button 
+              onClick={() => { setTxAmount(''); setTxDesc(''); setIsAddExpenseOpen(true); }}
+              variant="danger"
+              size="sm"
+              fullWidth
+            >
+              <ArrowUpRight className="w-4 h-4 mr-1.5" />
+              Masraf Ekle
+            </Button>
+
+            {/* Search & Filter */}
+            <div className="col-span-2 lg:col-span-1 flex items-center gap-2">
+              <div className="flex-1">
+                <Input 
+                  icon={<Search className="w-4 h-4 text-text-tertiary" />}
+                  placeholder="Ara..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                />
+              </div>
+              <Button 
+                onClick={() => setIsFilterOpen(!isFilterOpen)}
+                variant={isFilterOpen ? 'primary' : 'secondary'}
+                size="icon"
+              >
+                <Filter className="w-5 h-5" />
+              </Button>
             </div>
+          </div>
+
+          <AnimatePresence>
+            {isFilterOpen && (
+              <motion.div 
+                initial={{ height: 0, opacity: 0 }}
+                animate={{ height: 'auto', opacity: 1 }}
+                exit={{ height: 0, opacity: 0 }}
+                className="overflow-hidden"
+              >
+                <GlassCard className="p-4 space-y-4 bg-system-surface border border-system-border">
+                  <div>
+                    <label className="text-micro font-bold text-text-tertiary mb-2 block uppercase tracking-wider">Tarih Aralığı</label>
+                    <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-hide">
+                      {[
+                        { id: 'today', label: 'Bugün' },
+                        { id: 'week', label: 'Son 7 Gün' },
+                        { id: 'month', label: 'Bu Ay' },
+                        { id: 'all', label: 'Tümü' }
+                      ].map(f => (
+                        <Button
+                          key={f.id}
+                          size="sm"
+                          variant={dateFilter === f.id ? 'primary' : 'secondary'}
+                          onClick={() => setDateFilter(f.id as DateFilter)}
+                        >
+                          {f.label}
+                        </Button>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="text-micro font-bold text-text-tertiary mb-2 block uppercase tracking-wider">İşlem Tipi</label>
+                    <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-hide">
+                      {[
+                        { id: 'all', label: 'Tümü' },
+                        { id: 'sale', label: 'Satışlar' },
+                        { id: 'income', label: 'Gelirler' },
+                        { id: 'expense', label: 'Giderler' }
+                      ].map(f => (
+                        <Button
+                          key={f.id}
+                          size="sm"
+                          variant={typeFilter === f.id ? 'primary' : 'secondary'}
+                          onClick={() => setTypeFilter(f.id as TypeFilter)}
+                        >
+                          {f.label}
+                        </Button>
+                      ))}
+                    </div>
+                  </div>
+        </GlassCard>
+            </motion.div>
           )}
-        </div>
-        
-        <div className="relative z-10 grid grid-cols-2 gap-4 border-t border-gray-700/50 pt-4">
-          <div className="flex flex-col items-center justify-center">
-            <div className="flex items-center gap-1 text-gray-400 mb-1">
-              <TrendingUp className="w-3 h-3 text-success" />
-              <p className="text-[10px] font-bold uppercase tracking-wider">Kasa Girişi (Nakit/Kart)</p>
-            </div>
-            <p className="text-lg font-bold text-white">
-              +{summary.totalIncome.toLocaleString('tr-TR', { minimumFractionDigits: 2 })} ₺
-            </p>
-          </div>
-          
-          <div className="flex flex-col items-center justify-center border-l border-gray-700/50">
-            <div className="flex items-center gap-1 text-gray-400 mb-1">
-              <TrendingDown className="w-3 h-3 text-danger" />
-              <p className="text-[10px] font-bold uppercase tracking-wider">Kasa Çıkışı</p>
-            </div>
-            <p className="text-lg font-bold text-white">
-              -{summary.totalExpense.toLocaleString('tr-TR', { minimumFractionDigits: 2 })} ₺
-            </p>
-          </div>
-        </div>
+        </AnimatePresence>
       </div>
 
-      <div className="flex flex-col gap-4">
-        {/* Action Buttons */}
-        <div className="grid grid-cols-2 gap-3">
-          <Button 
-            onClick={() => { setTxAmount(''); setTxDesc(''); setIsAddIncomeOpen(true); }}
-            variant="outline"
-            className="text-success border-success/30 bg-success/5 hover:bg-success/10 py-3"
-          >
-            <ArrowDownRight className="h-5 w-5 mr-2" />
-            Gelir Ekle
-          </Button>
-          <Button 
-            onClick={() => { setTxAmount(''); setTxDesc(''); setIsAddExpenseOpen(true); }}
-            variant="danger"
-            className="py-3"
-          >
-            <ArrowUpRight className="h-5 w-5 mr-2" />
-            Masraf Ekle
-          </Button>
-        </div>
-
-        {/* Search & Filter */}
-        <div className="flex items-center gap-2">
-          <div className="flex-1">
-            <Input 
-              icon={<Search className="w-5 h-5 text-gray-400" />}
-              placeholder="İşlem veya kasiyer ara..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-            />
-          </div>
-          <button 
-            onClick={() => setIsFilterOpen(!isFilterOpen)}
-            className={`h-[42px] w-[42px] flex-shrink-0 flex items-center justify-center rounded-xl transition-all border ${isFilterOpen ? 'bg-primary border-primary text-white' : 'bg-white border-gray-300 text-gray-700 hover:bg-gray-50'}`}
-          >
-            <Filter className="h-5 w-5" />
-          </button>
-        </div>
-      </div>
-
-      <AnimatePresence>
-        {isFilterOpen && (
-          <motion.div 
-            initial={{ height: 0, opacity: 0 }}
-            animate={{ height: 'auto', opacity: 1 }}
-            exit={{ height: 0, opacity: 0 }}
-            className="overflow-hidden"
-          >
-            <GlassCard className="py-4 space-y-5">
-              <div>
-                <label className="text-xs font-semibold text-gray-500 mb-2 block uppercase tracking-wider">Tarih Aralığı</label>
-                <div className="flex space-x-2 overflow-x-auto pb-2 scrollbar-hide">
-                  {[
-                    { id: 'today', label: 'Bugün' },
-                    { id: 'week', label: 'Son 7 Gün' },
-                    { id: 'month', label: 'Bu Ay' },
-                    { id: 'all', label: 'Tüm Zamanlar' }
-                  ].map(f => (
-                    <button
-                      key={f.id}
-                      onClick={() => setDateFilter(f.id as DateFilter)}
-                      className={`px-4 py-2 rounded-md text-sm font-semibold whitespace-nowrap transition-colors border ${dateFilter === f.id ? 'bg-primary border-primary text-white' : 'bg-white text-gray-600 hover:bg-gray-50 border-gray-300'}`}
-                    >
-                      {f.label}
-                    </button>
-                  ))}
-                </div>
+      {/* Transactions List */}
+      <div className="flex flex-col flex-1 min-h-0 mt-4">
+        <DataList>
+            {loading ? (
+              <div className="flex-1 h-full flex items-center justify-center py-20 text-text-tertiary">
+                <Loader2 className="animate-spin w-8 h-8 text-primary" />
               </div>
-
-              <div>
-                <label className="text-xs font-semibold text-gray-500 mb-2 block uppercase tracking-wider">İşlem Tipi</label>
-                <div className="flex space-x-2 overflow-x-auto pb-2 scrollbar-hide">
-                  {[
-                    { id: 'all', label: 'Tüm Tipler' },
-                    { id: 'sale', label: 'Satışlar' },
-                    { id: 'income', label: 'Gelirler' },
-                    { id: 'expense', label: 'Giderler' }
-                  ].map(f => (
-                    <button
-                      key={f.id}
-                      onClick={() => setTypeFilter(f.id as TypeFilter)}
-                      className={`px-4 py-2 rounded-md text-sm font-semibold whitespace-nowrap transition-colors border ${typeFilter === f.id ? 'bg-primary border-primary text-white' : 'bg-white text-gray-600 hover:bg-gray-50 border-gray-300'}`}
-                    >
-                      {f.label}
-                    </button>
-                  ))}
-                </div>
+            ) : filteredTransactions.length === 0 ? (
+              <div className="flex-1 h-full flex items-center justify-center py-8">
+                <EmptyState 
+                  icon={Calendar}
+                  title={searchQuery ? "Sonuç Bulunamadı" : "İşlem Bulunamadı"}
+                  description={searchQuery ? "Aramanıza uygun işlem bulunamadı." : "Seçtiğiniz filtreye uygun kasa hareketi bulunmuyor. Yeni bir masraf veya gelir ekleyerek başlayabilirsiniz."}
+                  actionLabel={searchQuery ? undefined : "Masraf Ekle"}
+                  actionIcon={Plus}
+                  onAction={searchQuery ? undefined : () => setIsAddExpenseOpen(true)}
+                />
               </div>
-            </GlassCard>
-          </motion.div>
-        )}
-      </AnimatePresence>
-
-      <GlassCard variant="panel" padding="none" className="border border-gray-100">
-        {loading ? (
-          <div className="flex items-center justify-center py-20 text-text-tertiary font-subhead flex-col">
-            <Loader2 className="animate-spin h-8 w-8 text-primary mb-4" />
-            İşlemler Yükleniyor...
-          </div>
-        ) : filteredTransactions.length === 0 ? (
-          <div className="py-8">
-            <EmptyState 
-              icon={Calendar}
-              title={searchQuery ? "Sonuç Bulunamadı" : "İşlem Bulunamadı"}
-              description={searchQuery ? "Aramanıza uygun işlem bulunamadı." : "Seçtiğiniz filtreye uygun kasa hareketi bulunmuyor. Yeni bir masraf, gelir veya satış ekleyerek başlayabilirsiniz."}
-              actionLabel={searchQuery ? undefined : "Masraf Ekle"}
-              actionIcon={Plus}
-              onAction={searchQuery ? undefined : () => setIsAddExpenseOpen(true)}
-            />
-          </div>
-        ) : (
-          <div className="divide-y divide-gray-100">
-            {groupedTransactions.map((group) => (
-              <div key={group.title}>
-                <div className="px-6 py-2 bg-gray-50/80 border-b border-gray-100/50 sticky top-0 z-10 backdrop-blur-md">
-                  <h4 className="text-xs font-bold text-gray-500 uppercase tracking-wider">{group.title}</h4>
-                </div>
-                <div className="divide-y divide-gray-50">
-                  {group.txs.map((tx) => {
-                    const isExternal = tx.network_source_tenant_id && tx.network_source_tenant_id !== tenantId;
-                    const isMySyncedTx = tx.network_link_id && tx.network_source_tenant_id === tenantId;
-                    
-                    return (
-                      <motion.div 
-                        initial={{ opacity: 0, y: 5 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        key={tx.id}
-                        onClick={() => { setSelectedTx(tx); setIsTxDetailOpen(true); }}
-                        className={`px-6 py-4 flex items-center space-x-4 transition-all hover:bg-gray-50 cursor-pointer group ${isExternal ? 'bg-blue-50/40 border-l-4 border-blue-400' : ''}`}
-                      >
-                        <div className={`h-12 w-12 flex-shrink-0 rounded-2xl flex items-center justify-center transition-transform group-hover:scale-105 ${tx.type === 'sale' ? 'bg-primary/10 text-primary' : tx.type === 'income' ? 'bg-success/10 text-success' : 'bg-danger/10 text-danger'}`}>
-                          {getTypeIcon(tx.type)}
-                        </div>
+            ) : (
+              <div className="divide-y divide-system-border/50">
+                {groupedTransactions.map((group) => (
+                  <div key={group.title}>
+                    <div className="px-4 lg:px-6 py-2 bg-system-surface border-b border-system-border/50 sticky top-0 z-10">
+                      <h4 className="text-micro font-bold text-text-secondary uppercase tracking-wider">{group.title}</h4>
+                    </div>
+                    <div className="divide-y divide-system-border/50">
+                      {group.txs.map((tx) => {
+                        const isExternal = tx.network_source_tenant_id && tx.network_source_tenant_id !== tenantId;
+                        const isMySyncedTx = tx.network_link_id && tx.network_source_tenant_id === tenantId;
                         
-                        <div className="flex-1 min-w-0">
-                          <div className="flex justify-between items-start mb-1">
-                            <div className="flex items-center gap-2 pr-2">
-                              <p className="font-semibold text-gray-900 capitalize truncate">
-                                {tx.description || (tx.type === 'sale' ? 'Satış' : tx.type === 'income' ? 'Gelir' : 'Gider')}
-                              </p>
-                              {isExternal && <span className="px-1.5 py-0.5 text-[10px] font-bold bg-blue-100 text-blue-700 rounded-md whitespace-nowrap">DIŞ AĞ</span>}
+                        return (
+                          <motion.div 
+                            initial={{ opacity: 0, y: 5 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            key={tx.id}
+                            onClick={() => { setSelectedTx(tx); setIsTxDetailOpen(true); }}
+                            className={`p-3 lg:p-4 sm:px-6 flex items-center space-x-3 lg:space-x-4 transition-all hover:bg-glass-highlight cursor-pointer group ${isExternal ? 'bg-info-light/40 border-l-4 border-info' : ''}`}
+                          >
+                            <div className={`w-12 h-12 flex-shrink-0 rounded-xl flex items-center justify-center transition-colors group-hover:bg-primary/5 border border-system-border/50 ${tx.type === 'sale' ? 'text-primary' : tx.type === 'income' ? 'text-success' : 'text-danger'}`}>
+                              {getTypeIcon(tx.type)}
                             </div>
-                            <p className={`font-extrabold text-base flex-shrink-0 ${tx.type === 'expense' ? 'text-danger' : 'text-gray-900'}`}>
-                              {tx.type === 'expense' ? '-' : '+'}{Number(tx.amount).toLocaleString('tr-TR', { minimumFractionDigits: 2 })} ₺
-                            </p>
-                          </div>
-                          
-                          <div className="flex items-center mt-1 text-[13px] font-medium text-gray-500">
-                            <span className="flex-shrink-0 bg-gray-100 text-gray-600 px-2 py-0.5 rounded flex items-center">
-                              {new Date(tx.created_at).toLocaleTimeString('tr-TR', { hour: '2-digit', minute:'2-digit' })}
-                            </span>
-                            <span className="mx-2 text-gray-300">•</span>
-                            <span className="flex-shrink-0">{getPaymentMethodLabel(tx.payment_method)}</span>
                             
-                            {tx.cashier_name && (
-                              <>
-                                <span className="mx-2 text-gray-300">•</span>
-                                <span className="text-primary bg-primary/5 px-2 py-0.5 rounded truncate">
-                                  {tx.cashier_name}
-                                </span>
-                              </>
-                            )}
-                            
-                            {isMySyncedTx && (
-                              <>
-                                <span className="mx-2 text-gray-300">•</span>
-                                <span className="flex items-center">
-                                  {tx.network_read_status === 'sent' && <Check className="w-3.5 h-3.5 text-gray-400" title="Gönderildi" />}
-                                  {tx.network_read_status === 'read' && <CheckCheck className="w-3.5 h-3.5 text-blue-500" title="Okundu" />}
-                                  {tx.network_read_status === 'disputed' && <AlertCircle className="w-3.5 h-3.5 text-red-500" title="İtiraz Edildi" />}
-                                </span>
-                              </>
-                            )}
-                          </div>
-                        </div>
-                      </motion.div>
-                    );
-                  })}
-                </div>
+                            <div className="flex-1 min-w-0">
+                              <div className="flex justify-between items-start mb-0.5">
+                                <div className="flex items-center gap-2 pr-2 min-w-0">
+                                  <p className="font-semibold text-body text-text-primary capitalize truncate">
+                                    {tx.description || (tx.type === 'sale' ? 'Satış' : tx.type === 'income' ? 'Gelir' : 'Gider')}
+                                  </p>
+                                  {isExternal && <span className="px-1.5 py-0.5 text-[10px] font-bold bg-info/10 text-info border border-info/20 rounded-md whitespace-nowrap">DIŞ AĞ</span>}
+                                </div>
+                                <p className={`font-bold text-title-3 flex-shrink-0 ${tx.type === 'expense' ? 'text-text-primary' : 'text-success'}`}>
+                                  {tx.type === 'expense' ? '-' : '+'}{Number(tx.amount).toLocaleString('tr-TR', { minimumFractionDigits: 2 })} TL
+                                </p>
+                              </div>
+                              
+                              <div className="flex items-center text-caption font-medium text-text-secondary">
+                                <span className="flex-shrink-0">{new Date(tx.created_at).toLocaleTimeString('tr-TR', { hour: '2-digit', minute:'2-digit' })}</span>
+                                <span className="mx-2 text-system-border">•</span>
+                                <span className="flex-shrink-0">{getPaymentMethodLabel(tx.payment_method)}</span>
+                                
+                                {tx.cashier_name && (
+                                  <>
+                                    <span className="mx-2 text-system-border">•</span>
+                                    <span className="truncate">
+                                      {tx.cashier_name}
+                                    </span>
+                                  </>
+                                )}
+                                
+                                {isMySyncedTx && (
+                                  <>
+                                    <span className="mx-2 text-system-border">•</span>
+                                    <span className="flex items-center">
+                                      {tx.network_read_status === 'sent' && <span title="Gönderildi"><Check className="w-3.5 h-3.5 text-text-tertiary" /></span>}
+                                      {tx.network_read_status === 'read' && <span title="Okundu"><CheckCheck className="w-3.5 h-3.5 text-info" /></span>}
+                                      {tx.network_read_status === 'disputed' && <span title="İtiraz Edildi"><AlertCircle className="w-3.5 h-3.5 text-danger" /></span>}
+                                    </span>
+                                  </>
+                                )}
+                              </div>
+                            </div>
+                          </motion.div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                ))}
               </div>
-            ))}
-          </div>
-        )}
-      </GlassCard>
+            )}
+          </DataList>
+      </div>
 
       {/* Expense Modal */}
       <BottomSheet isOpen={isAddExpenseOpen} onClose={() => setIsAddExpenseOpen(false)} title="Gider / Masraf Ekle">
         <div className="space-y-4 pt-4 pb-8">
           <div>
-            <label className="block text-sm font-bold text-gray-700 mb-1">Masraf Tutarı (₺)</label>
-            <Input type="number" placeholder="Örn: 150" value={txAmount} onChange={e => setTxAmount(e.target.value)} className="text-lg font-bold" />
+            <label className="block text-caption font-bold text-text-secondary mb-1">Masraf Tutarı</label>
+            <Input type="number" placeholder="Örn: 150" value={txAmount} onChange={e => setTxAmount(e.target.value)} />
           </div>
           <div>
-            <label className="block text-sm font-bold text-gray-700 mb-1">Açıklama</label>
+            <label className="block text-caption font-bold text-text-secondary mb-1">Açıklama</label>
             <Input placeholder="Örn: Kurye bahşişi, Elektrik faturası vb." value={txDesc} onChange={e => setTxDesc(e.target.value)} />
           </div>
           <Button 
-            className="w-full mt-6 h-12 text-lg" size="lg" 
+            className="w-full mt-4"
             variant="danger"
             onClick={() => handleAddTx('expense')} 
             disabled={!txAmount || addTransactionMutation.isPending}
@@ -476,15 +476,15 @@ export const Transactions = () => {
       <BottomSheet isOpen={isAddIncomeOpen} onClose={() => setIsAddIncomeOpen(false)} title="Gelir Ekle">
         <div className="space-y-4 pt-4 pb-8">
           <div>
-            <label className="block text-sm font-bold text-gray-700 mb-1">Gelir Tutarı (₺)</label>
-            <Input type="number" placeholder="Örn: 500" value={txAmount} onChange={e => setTxAmount(e.target.value)} className="text-lg font-bold" />
+            <label className="block text-caption font-bold text-text-secondary mb-1">Gelir Tutarı</label>
+            <Input type="number" placeholder="Örn: 500" value={txAmount} onChange={e => setTxAmount(e.target.value)} />
           </div>
           <div>
-            <label className="block text-sm font-bold text-gray-700 mb-1">Açıklama</label>
+            <label className="block text-caption font-bold text-text-secondary mb-1">Açıklama</label>
             <Input placeholder="Örn: Hurda satışı, Elden ödeme vb." value={txDesc} onChange={e => setTxDesc(e.target.value)} />
           </div>
           <Button 
-            className="w-full mt-6 h-12 text-lg !bg-success hover:!bg-success/90 text-white" size="lg" 
+            className="w-full mt-4"
             onClick={() => handleAddTx('income')} 
             disabled={!txAmount || addTransactionMutation.isPending}
             isLoading={addTransactionMutation.isPending}
@@ -502,29 +502,29 @@ export const Transactions = () => {
               <div className={`mx-auto h-16 w-16 rounded-full flex items-center justify-center mb-4 ${selectedTx.type === 'sale' ? 'bg-primary/10 text-primary' : selectedTx.type === 'income' ? 'bg-success/10 text-success' : 'bg-danger/10 text-danger'}`}>
                 {getTypeIcon(selectedTx.type)}
               </div>
-              <h2 className="text-3xl font-extrabold text-gray-900 mb-1">
-                {selectedTx.type === 'expense' ? '-' : '+'}{Number(selectedTx.amount).toLocaleString('tr-TR', { minimumFractionDigits: 2 })} ₺
+              <h2 className="text-headline font-black text-text-primary mb-1">
+                {selectedTx.type === 'expense' ? '-' : '+'}{Number(selectedTx.amount).toLocaleString('tr-TR', { minimumFractionDigits: 2 })} TL
               </h2>
-              <p className="text-gray-500 font-medium">{selectedTx.description || 'Açıklama yok'}</p>
+              <p className="text-text-secondary font-medium text-body">{selectedTx.description || 'Açıklama yok'}</p>
             </div>
 
-            <div className="bg-gray-50 border border-gray-200 rounded-2xl p-4 space-y-4">
+            <div className="bg-system-bg border border-system-border rounded-2xl p-4 space-y-4">
               <div className="flex justify-between">
-                <span className="text-gray-500 font-medium">Tarih</span>
-                <span className="font-bold text-gray-900">{new Date(selectedTx.created_at).toLocaleString('tr-TR', { dateStyle: 'long', timeStyle: 'short' })}</span>
+                <span className="text-text-secondary font-medium">Tarih</span>
+                <span className="font-bold text-text-primary">{new Date(selectedTx.created_at).toLocaleString('tr-TR', { dateStyle: 'long', timeStyle: 'short' })}</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-gray-500 font-medium">Ödeme Yöntemi</span>
-                <span className="font-bold text-gray-900">{getPaymentMethodLabel(selectedTx.payment_method)}</span>
+                <span className="text-text-secondary font-medium">Ödeme Yöntemi</span>
+                <span className="font-bold text-text-primary">{getPaymentMethodLabel(selectedTx.payment_method)}</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-gray-500 font-medium">İşlem Tipi</span>
-                <span className="font-bold text-gray-900 capitalize">{selectedTx.type === 'sale' ? 'Satış' : selectedTx.type === 'income' ? 'Gelir' : 'Gider / Masraf'}</span>
+                <span className="text-text-secondary font-medium">İşlem Tipi</span>
+                <span className="font-bold text-text-primary capitalize">{selectedTx.type === 'sale' ? 'Satış' : selectedTx.type === 'income' ? 'Gelir' : 'Gider / Masraf'}</span>
               </div>
               {selectedTx.cashier_name && (
                 <div className="flex justify-between">
-                  <span className="text-gray-500 font-medium">İşlemi Yapan</span>
-                  <span className="font-bold text-gray-900">{selectedTx.cashier_name}</span>
+                  <span className="text-text-secondary font-medium">İşlemi Yapan</span>
+                  <span className="font-bold text-text-primary">{selectedTx.cashier_name}</span>
                 </div>
               )}
             </div>
@@ -533,7 +533,8 @@ export const Transactions = () => {
               <div className="pt-2">
                 <Button 
                   variant="danger" 
-                  className="w-full h-12"
+                  size="lg"
+                  fullWidth
                   onClick={() => {
                     if (window.confirm('Bu işlemi silmek istediğinize emin misiniz?')) {
                       handleDeleteTx();
@@ -544,7 +545,7 @@ export const Transactions = () => {
                 >
                   <Trash2 className="w-4 h-4 mr-2" /> İşlemi Sil
                 </Button>
-                <p className="text-xs text-center text-gray-400 mt-3">Sadece manuel eklenen gelir ve masraflar silinebilir. Satış iptali için iade işlemi gereklidir.</p>
+                <p className="text-xs text-center text-text-tertiary mt-3">Sadece manuel eklenen gelir ve masraflar silinebilir. Satış iptali için iade işlemi gereklidir.</p>
               </div>
             )}
           </div>

@@ -8,12 +8,14 @@ import { BottomSheet } from '@/shared/ui/BottomSheet';
 import { Search, UserPlus, Phone, Send, ChevronRight, ArrowDownRight, ArrowUpRight, History, X, Loader2, Users, Plus, Check, CheckCheck, AlertCircle, Edit2, Trash2 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { sendSMS } from '@/shared/lib/netgsm';
+import { Header } from '@/widgets/Header';
 import { EmptyState } from '@/shared/ui/EmptyState';
+import { DataList } from '@/shared/ui/DataList';
 import { supabase } from '@/shared/api/supabase';
 import { useEntities, useAddEntity, useUpdateEntityBalance, useUpdateEntity, useDeleteEntity, type Entity } from '@/shared/hooks/useEntities';
 import { useFinanceTransactions, useAddFinanceTransaction, useUpdateFinanceTransaction, useDeleteFinanceTransaction, type Transaction } from '@/shared/hooks/useFinance';
 import { useNetworkLink, useCreateNetworkLink, useDisconnectNetworkLink } from '@/shared/hooks/useNetwork';
-import { Header } from '@/widgets/Header';
+import { FilterChip } from '@/shared/ui/FilterChip';
 import { GlassCard as Card } from '@/shared/ui/GlassCard';
 import { useSettings } from '@/shared/hooks/useSettings';
 import { useQuery } from '@tanstack/react-query';
@@ -379,41 +381,42 @@ export const Suppliers = () => {
   });
 
   return (
-    <div className="flex flex-col gap-4 w-full h-full">
+    <div className="flex flex-col h-full overflow-hidden w-full gap-4 max-w-[1600px] mx-auto">
       <div className="shrink-0">
         <Header title="Toptancılar" subtitle="Toptancı ve Sağlayıcı Borç Takibi" />
       </div>
 
       {/* Compact Top Bar: Stats, Search & Action */}
-      <div className="bg-white p-3 sm:p-4 rounded-2xl shadow-sm border border-gray-100 flex flex-col lg:flex-row gap-4 justify-between items-center relative z-10 shrink-0">
-        <div className="flex items-center justify-between w-full lg:w-auto gap-4">
-          <div className="flex items-center gap-3">
-            <div className="p-2 sm:p-2.5 bg-red-50 rounded-xl">
-              <History className="h-5 w-5 text-red-500" />
-            </div>
-            <div>
-              <p className="text-[10px] sm:text-xs font-bold text-gray-500 uppercase tracking-wider">Piyasadaki Borcunuz</p>
-              <p className="text-lg sm:text-xl font-black text-red-600 leading-none mt-0.5">{totalReceivables.toLocaleString('tr-TR', {minimumFractionDigits:2})} ₺</p>
+      <div className="bg-system-surface p-2 sm:p-3 rounded-2xl shadow-sm border border-system-border shrink-0 flex flex-col md:flex-row md:items-center justify-between gap-3 mb-2">
+        <div className="flex items-center gap-3 px-1 sm:px-2">
+          <div className="w-10 h-10 bg-danger/10 rounded-xl flex items-center justify-center shrink-0">
+            <History className="h-5 w-5 text-danger" />
+          </div>
+          <div className="flex-1 min-w-0">
+            <p className="text-micro font-bold text-text-secondary uppercase tracking-wider truncate">Piyasadaki Borcunuz</p>
+            <div className="flex items-baseline gap-1 mt-0.5">
+              <span className="text-subhead font-black text-danger leading-none truncate">{totalReceivables.toLocaleString('tr-TR', {minimumFractionDigits:2})}</span>
+              <span className="text-caption font-bold text-danger/70">₺</span>
             </div>
           </div>
         </div>
         
-        <div className="flex flex-row items-center gap-2 w-full lg:w-auto lg:min-w-[400px]">
-          <div className="flex-1">
+        <div className="flex flex-col sm:flex-row items-center gap-2 w-full md:w-auto md:min-w-[400px]">
+          <div className="flex-1 w-full min-w-0">
             <Input 
-              icon={<Search className="w-4 h-4 text-gray-400" />} 
+              icon={<Search className="w-4 h-4 text-text-tertiary" />} 
               placeholder="Toptancı ara..." 
               value={search}
               onChange={(e) => setSearch(e.target.value)}
             />
           </div>
-          <Button onClick={() => {
+          <Button className="w-full sm:w-auto" onClick={() => {
             setEditingCustomer(null);
             setNewName('');
             setNewPhone('');
             setNewInitialDebt('');
             setIsAddOpen(true);
-          }} className="flex-shrink-0 px-3 sm:px-4">
+          }}>
             <UserPlus className="h-4 w-4 sm:mr-2" />
             <span className="hidden sm:inline">Yeni</span>
           </Button>
@@ -422,20 +425,20 @@ export const Suppliers = () => {
 
       {/* Upcoming Payments (Only show if there are any) */}
       {upcomingPayments.length > 0 && (
-        <Card padding="sm" className="bg-white border-orange-100 shadow-sm shrink-0">
-          <h3 className="text-[10px] font-bold text-orange-600 uppercase tracking-widest mb-2 px-2 flex items-center gap-1.5">
+        <Card padding="sm" className="bg-system-surface border-warning/30 shadow-sm shrink-0">
+          <h3 className="text-micro font-bold text-warning uppercase tracking-widest mb-2 px-2 flex items-center gap-1.5">
             <History className="w-3 h-3" /> Yaklaşan Ödemeler ({upcomingPayments.length})
           </h3>
           <div className="flex gap-2 overflow-x-auto pb-2 px-2 snap-x">
             {upcomingPayments.map(tx => {
               const isOverdue = new Date(tx.due_date) < new Date(new Date().setHours(0,0,0,0));
               return (
-                <div key={tx.id} className="flex-shrink-0 w-[200px] snap-start flex flex-col p-2.5 rounded-xl bg-orange-50/50 border border-orange-100 cursor-pointer hover:bg-orange-50 transition-colors" onClick={() => openLedger(customers.find(c => c.id === tx.customer_id) as any)}>
-                  <p className="text-xs font-bold text-gray-900 truncate">{tx.customers?.name}</p>
-                  <p className={`text-[10px] font-bold mt-0.5 ${isOverdue ? 'text-red-500' : 'text-orange-500'}`}>
+                <div key={tx.id} className="flex-shrink-0 w-[200px] snap-start flex flex-col p-2.5 rounded-xl bg-warning/5 border border-warning/20 cursor-pointer hover:bg-warning/10 transition-colors" onClick={() => openLedger(customers.find(c => c.id === tx.customer_id) as any)}>
+                  <p className="text-caption font-bold text-text-primary truncate">{tx.customers?.name}</p>
+                  <p className={`text-micro font-bold mt-0.5 ${isOverdue ? 'text-danger' : 'text-warning'}`}>
                     {new Date(tx.due_date).toLocaleDateString('tr-TR')} {isOverdue && '(Gecikti!)'}
                   </p>
-                  <p className="text-sm font-black text-gray-900 mt-1">{Number(tx.amount).toLocaleString('tr-TR')} ₺</p>
+                  <p className="text-body font-black text-text-primary mt-1">{Number(tx.amount).toLocaleString('tr-TR')} ₺</p>
                 </div>
               );
             })}
@@ -444,31 +447,29 @@ export const Suppliers = () => {
       )}
 
       {/* Data List */}
-      <Card padding="none" className="flex-1 flex flex-col overflow-hidden border-gray-100 shadow-sm min-h-0">
-        <div className="px-4 py-3 border-b border-gray-100 bg-gray-50/80 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shrink-0">
-          <h3 className="font-semibold text-gray-900 text-sm flex items-center gap-2">
-            <Users className="w-4 h-4 text-gray-400" /> Kişi ve Kurumlar 
-            {search && <span className="text-xs font-normal text-gray-500">({filteredCustomers.length} sonuç)</span>}
-          </h3>
-          
-          <div className="flex bg-gray-200/60 p-1 rounded-lg w-full sm:w-auto">
-            <button 
-              onClick={() => setFilter('all')}
-              className={`flex-1 sm:px-4 py-1.5 text-[11px] font-bold rounded-md transition-all ${filter === 'all' ? 'bg-white shadow-sm text-gray-900' : 'text-gray-500 hover:text-gray-900'}`}
-            >
-              Tümü
-            </button>
-            <button 
-              onClick={() => setFilter('creditors')}
-              className={`flex-1 sm:px-4 py-1.5 text-[11px] font-bold rounded-md transition-all ${filter === 'creditors' ? 'bg-white shadow-sm text-gray-900' : 'text-gray-500 hover:text-gray-900'}`}
-            >
-              Alacaklılar (Bize Borçlular)
-            </button>
+      <DataList
+        header={
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 w-full">
+            <h3 className="font-semibold text-text-primary text-subhead flex items-center gap-2">
+              <Users className="w-5 h-5 text-text-tertiary" /> Kişi ve Kurumlar 
+              {search && <span className="text-caption font-normal text-text-secondary">({filteredCustomers.length} sonuç)</span>}
+            </h3>
+            
+            <div className="flex flex-wrap items-center gap-2 w-full md:w-auto">
+              <FilterChip 
+                label="Tümü"
+                isActive={filter === 'all'}
+                onClick={() => setFilter('all')}
+              />
+              <FilterChip 
+                label="Alacaklılar"
+                isActive={filter === 'creditors'}
+                onClick={() => setFilter('creditors')}
+              />
+            </div>
           </div>
-        </div>
-
-        
-        <div className="w-full flex-1 overflow-y-auto">
+        }
+      >
         {loading ? (
           <div className="w-full min-h-[200px] flex items-center justify-center p-12">
             <Loader2 className="h-8 w-8 animate-spin text-primary" />
@@ -485,24 +486,26 @@ export const Suppliers = () => {
             />
           </div>
         ) : (
-          <div className="divide-y divide-gray-100">
+          <div className="divide-y divide-system-border/50">
             <AnimatePresence>
-              {filteredCustomers.map((customer) => (
+              {filteredCustomers.map(customer => (
                 <motion.div 
-                  key={customer.id}
                   initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, height: 0 }}
-                  className="p-4 sm:px-6 hover:bg-gray-50 transition-colors flex items-center justify-between group cursor-pointer"
+                  exit={{ opacity: 0, scale: 0.95 }}
+                  key={customer.id} 
+                  className="p-4 sm:px-6 hover:bg-glass-highlight transition-colors cursor-pointer flex items-center justify-between group"
                   onClick={() => openLedger(customer)}
                 >
                   <div className="flex items-center gap-4">
-                    <div className="w-12 h-12 rounded-xl bg-gray-100 text-gray-500 flex items-center justify-center font-bold text-lg uppercase group-hover:bg-primary/10 group-hover:text-primary transition-colors">
-                      {customer.name.substring(0, 2)}
+                    <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-system-surface border border-system-border flex items-center justify-center font-bold text-text-primary shadow-sm">
+                      {customer.name.substring(0, 2).toUpperCase()}
                     </div>
                     <div>
-                      <p className="font-semibold text-gray-900">{customer.name}</p>
-                      <p className="text-xs text-gray-500 mt-0.5 flex items-center gap-1">
+                      <h3 className="font-bold text-text-primary text-body sm:text-title-3 mb-0.5 group-hover:text-primary transition-colors flex items-center gap-2">
+                        {customer.name}
+                      </h3>
+                      <p className="text-micro sm:text-caption text-text-tertiary flex items-center gap-1">
                         {customer.phone ? (
                           <><Phone className="w-3 h-3" /> {customer.phone}</>
                         ) : (
@@ -512,24 +515,22 @@ export const Suppliers = () => {
                     </div>
                   </div>
                   
-                  <div className="flex items-center gap-4">
-                    <span className={`text-lg font-bold ${(customer.balance ?? 0) > 0 ? 'text-red-600' : 'text-gray-900'}`}>
+                  <div className="text-right">
+                    <p className={`font-black text-body sm:text-title-3 ${(customer.balance ?? 0) > 0 ? 'text-danger' : 'text-text-primary'}`}>
                       {(customer.balance ?? 0).toLocaleString('tr-TR', { minimumFractionDigits: 2 })} ₺
-                    </span>
-                    <ChevronRight className="w-5 h-5 text-gray-400 opacity-0 group-hover:opacity-100 transition-opacity" />
+                    </p>
                   </div>
                 </motion.div>
               ))}
             </AnimatePresence>
           </div>
         )}
-      </div>
-      </Card>
+      </DataList>
 
       {/* Info Alert - Compact (Moved to bottom) */}
-      <div className="bg-blue-50/60 border border-blue-100 text-blue-800 rounded-xl px-4 py-2 flex items-center gap-2.5 shrink-0">
-        <AlertCircle className="w-4 h-4 flex-shrink-0 text-blue-600" />
-        <p className="text-[11px] sm:text-xs text-blue-700 font-medium">
+      <div className="bg-info/10 border border-info/20 text-info rounded-xl px-4 py-2 flex items-center gap-2.5 shrink-0">
+        <AlertCircle className="w-4 h-4 flex-shrink-0" />
+        <p className="text-caption font-medium">
           Toptancılar sekmesinde size ürün veren ve ödeme yapacağınız firmaların (alacaklıların) bakiyesi tutulur.
         </p>
       </div>
@@ -537,23 +538,24 @@ export const Suppliers = () => {
       <BottomSheet isOpen={isAddOpen} onClose={() => { setIsAddOpen(false); setEditingCustomer(null); }} title={editingCustomer ? "Toptancıyı Düzenle" : "Yeni Toptancı Ekle"}>
         <div className="space-y-4 pt-4 pb-8">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Ad Soyad</label>
+            <label className="block text-subhead font-medium text-text-secondary mb-1">Ad Soyad</label>
             <Input placeholder="Toptancı/Firma Adı" value={newName} onChange={e => setNewName(e.target.value)} />
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Telefon (İsteğe Bağlı)</label>
+            <label className="block text-subhead font-medium text-text-secondary mb-1">Telefon (İsteğe Bağlı)</label>
             <Input placeholder="05XX XXX XX XX" type="tel" maxLength={15} value={newPhone} onChange={handlePhoneChange} />
           </div>
           {!editingCustomer && (
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Açılış Bakiyesi (İsteğe Bağlı)</label>
+              <label className="block text-subhead font-medium text-text-secondary mb-1">Açılış Bakiyesi (İsteğe Bağlı)</label>
               <Input placeholder="0.00" type="number" value={newInitialDebt} onChange={e => setNewInitialDebt(e.target.value)} />
-              <p className="text-xs text-gray-500 mt-1">Geçmişten kalan bir borcu varsa girebilirsiniz.</p>
+              <p className="text-xs text-text-secondary mt-1">Geçmişten kalan bir borcu varsa girebilirsiniz.</p>
             </div>
           )}
           <Button 
-            className="w-full mt-6" 
+            fullWidth
             size="lg" 
+            className="mt-6"
             onClick={handleAddOrEditCustomer} 
             disabled={!newName || addCustomerMutation.isPending || updateCustomerMutation.isPending}
             isLoading={addCustomerMutation.isPending || updateCustomerMutation.isPending}
@@ -582,44 +584,50 @@ export const Suppliers = () => {
               animate={{ x: 0 }}
               exit={{ x: '100%' }}
               transition={{ type: 'spring', damping: 25, stiffness: 200 }}
-              className="fixed inset-y-0 right-0 z-50 w-full max-w-md bg-white shadow-2xl flex flex-col border-l border-gray-200"
+              className="fixed inset-y-0 right-0 z-50 w-full max-w-md bg-system-surface shadow-2xl flex flex-col border-l border-system-border"
             >
               {/* Drawer Header & Balance Area */}
-              <div className="bg-gray-900 text-white rounded-b-3xl shadow-lg z-10 relative px-6 py-8 pb-10">
+              <div className="bg-hero-bg text-hero-text z-10 relative px-4 py-6 sm:px-6 sm:py-8 shadow-xl">
                 <div className="flex justify-between items-start mb-6">
-                  <div className="flex items-center gap-4">
-                    <div className="w-12 h-12 rounded-full bg-white/10 border border-white/20 flex items-center justify-center font-bold text-lg uppercase text-white shadow-inner">
+                  <div className="flex items-center gap-3">
+                    <div className="w-12 h-12 rounded-full bg-hero-surface border border-hero-border flex items-center justify-center font-bold text-lg uppercase text-white shadow-sm shrink-0">
                       {selectedCustomer.name.substring(0, 2)}
                     </div>
-                    <div>
-                      <h2 className="text-xl font-bold text-white tracking-tight leading-tight">{selectedCustomer.name}</h2>
-                      <p className="text-sm text-gray-400 flex items-center gap-1 mt-0.5">
-                        {selectedCustomer.phone ? <><Phone className="w-3 h-3" /> {selectedCustomer.phone}</> : 'Telefon Kayıtlı Değil'}
+                    <div className="min-w-0">
+                      <h2 className="text-lg sm:text-xl font-bold text-white tracking-tight leading-tight truncate">{selectedCustomer.name}</h2>
+                      <p className="text-xs sm:text-sm text-hero-muted flex items-center gap-1 mt-0.5 truncate">
+                        {selectedCustomer.phone ? <><Phone className="w-3 h-3 shrink-0" /> {selectedCustomer.phone}</> : 'Telefon Kayıtlı Değil'}
                       </p>
                     </div>
                   </div>
-                  <div className="flex items-center gap-1">
-                    <button 
+                  <div className="flex items-center gap-0.5 shrink-0">
+                    <Button 
+                      variant="ghost"
+                      size="icon"
                       onClick={handleOpenEdit}
-                      className="p-2 bg-white/10 hover:bg-white/20 rounded-full text-white transition-colors backdrop-blur-md"
                       title="Düzenle"
+                      className="text-hero-muted hover:text-white hover:bg-hero-surface"
                     >
-                      <Edit2 className="h-5 w-5" />
-                    </button>
-                    <button 
+                      <Edit2 className="h-4 w-4 sm:h-5 sm:w-5" />
+                    </Button>
+                    <Button 
+                      variant="ghost"
+                      size="icon"
                       onClick={handleDeleteCustomer}
-                      className="p-2 bg-white/10 hover:bg-red-500/80 rounded-full text-white transition-colors backdrop-blur-md"
                       title="Sil"
+                      className="text-hero-muted hover:text-danger hover:bg-hero-surface"
                     >
-                      <Trash2 className="h-5 w-5" />
-                    </button>
-                    <button 
+                      <Trash2 className="h-4 w-4 sm:h-5 sm:w-5" />
+                    </Button>
+                    <Button 
+                      variant="ghost"
+                      size="icon"
                       onClick={() => setSelectedCustomer(null)}
-                      className="p-2 bg-white/10 hover:bg-white/20 rounded-full text-white transition-colors backdrop-blur-md"
                       title="Kapat"
+                      className="text-hero-muted hover:text-white hover:bg-hero-surface"
                     >
-                      <X className="h-5 w-5" />
-                    </button>
+                      <X className="h-4 w-4 sm:h-5 sm:w-5" />
+                    </Button>
                   </div>
                 </div>
 
@@ -627,88 +635,88 @@ export const Suppliers = () => {
                 <div className="flex justify-center mb-6">
                   {!isNetworkLoading && (
                     networkLink?.status === 'active' ? (
-                      <button 
+                      <Button 
                         onClick={handleDisconnect}
                         disabled={disconnectNetworkLink.isPending}
-                        className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-blue-500 hover:bg-red-500 group text-white text-xs font-bold shadow-md transition-colors"
+                        variant="danger"
+                        size="sm"
                         title="Bağlantıyı Koparmak İçin Tıklayın"
+                        className="bg-danger/20 text-danger-light hover:bg-danger/30 border-none"
                       >
                         {disconnectNetworkLink.isPending ? (
-                          <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                          <Loader2 className="w-3.5 h-3.5 animate-spin mr-1.5" />
                         ) : (
-                          <>
-                            <span className="relative flex h-2 w-2 group-hover:hidden">
-                              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-white opacity-75"></span>
-                              <span className="relative inline-flex rounded-full h-2 w-2 bg-white"></span>
-                            </span>
-                            <X className="w-3.5 h-3.5 hidden group-hover:block" />
-                          </>
+                          <X className="w-3.5 h-3.5 mr-1.5" />
                         )}
-                        <span className="group-hover:hidden">Defterler Bağlı</span>
-                        <span className="hidden group-hover:inline">Bağlantıyı Kopar</span>
-                      </button>
+                        Bağlantıyı Kopar
+                      </Button>
                     ) : (
-                      <button 
+                      <Button 
                         onClick={() => setIsNetworkModalOpen(true)}
-                        className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/10 hover:bg-white/20 backdrop-blur-md text-white text-xs font-bold border border-white/10 transition-colors shadow-sm"
+                        size="sm"
+                        className="bg-hero-surface text-white border border-hero-border hover:bg-hero-surface/80"
                       >
-                        <UserPlus className="w-3.5 h-3.5" />
+                        <UserPlus className="w-3.5 h-3.5 mr-1.5" />
                         Defteri Bağla
-                      </button>
+                      </Button>
                     )
                   )}
                 </div>
 
-                <div className="text-center">
-                  <p className="text-xs font-semibold text-gray-400 uppercase tracking-widest mb-1 opacity-80">Toplam Bakiye</p>
-                  <p className={`text-5xl font-black tracking-tighter ${(selectedCustomer.balance ?? 0) > 0 ? 'text-red-400' : 'text-white'}`}>
-                    {(selectedCustomer.balance ?? 0).toLocaleString('tr-TR', {minimumFractionDigits: 2})} <span className="text-2xl font-semibold opacity-70">₺</span>
+                <div className="text-center mb-4">
+                  <p className="text-micro font-bold text-hero-muted uppercase tracking-widest mb-1 opacity-80">Toplam Bakiye</p>
+                  <p className="text-4xl sm:text-5xl font-black tracking-tighter text-white">
+                    {(selectedCustomer.balance ?? 0).toLocaleString('tr-TR', {minimumFractionDigits: 2})} <span className="text-xl sm:text-2xl font-bold opacity-70">₺</span>
                   </p>
                 </div>
                 
-                {/* Action Buttons Float over the bottom edge */}
-                <div className="absolute -bottom-6 left-0 right-0 px-6 flex gap-3">
-                  <button 
+                {/* Action Buttons directly inside, not floating out */}
+                <div className="flex gap-2 sm:gap-3 mt-6">
+                  <Button 
                     onClick={() => openTxModal('add_debt')}
-                    className="flex-1 flex items-center justify-center py-3.5 bg-red-500 hover:bg-red-600 text-white rounded-2xl text-sm font-bold transition-all shadow-[0_8px_16px_-6px_rgba(239,68,68,0.5)] border border-red-400"
+                    variant="danger"
+                    className="flex-1 shadow-lg shadow-danger/20 py-2 sm:py-3 h-auto text-sm sm:text-base font-bold"
                   >
-                    <ArrowUpRight className="h-5 w-5 mr-1.5"/> Borç Yaz
-                  </button>
-                  <button 
+                    <ArrowUpRight className="h-4 w-4 sm:h-5 sm:w-5 mr-1.5"/> Borç Yaz
+                  </Button>
+                  <Button 
                     onClick={() => openTxModal('collect_payment')}
-                    className="flex-1 flex items-center justify-center py-3.5 bg-green-500 hover:bg-green-600 text-white rounded-2xl text-sm font-bold transition-all shadow-[0_8px_16px_-6px_rgba(34,197,94,0.5)] border border-green-400"
+                    className="flex-1 bg-success hover:bg-success-hover border-success text-white shadow-lg shadow-success/20 py-2 sm:py-3 h-auto text-sm sm:text-base font-bold"
                   >
-                    <ArrowDownRight className="h-5 w-5 mr-1.5"/> Tahsilat Al
-                  </button>
+                    <ArrowDownRight className="h-4 w-4 sm:h-5 sm:w-5 mr-1.5"/> Tahsilat Al
+                  </Button>
                 </div>
               </div>
 
               {/* Drawer Content - Ledger Timeline */}
-              <div className="flex-1 overflow-y-auto px-6 pt-12 pb-6 bg-gray-50">
+              <div className="flex-1 overflow-y-auto px-4 sm:px-6 pt-6 pb-6 bg-system-bg">
                 {(selectedCustomer.balance ?? 0) > 0 && selectedCustomer.phone && (
-                  <button 
-                    className="w-full mb-6 flex items-center justify-center py-2.5 text-xs font-bold text-gray-700 hover:text-gray-900 bg-white border border-gray-200 hover:border-gray-300 shadow-sm rounded-xl transition-all"
+                  <Button 
+                    fullWidth
+                    variant="secondary"
+                    size="md"
+                    className="mb-6 shadow-sm"
                     onClick={(e) => handleSms(e, selectedCustomer)}
                   >
                     <Send className="h-4 w-4 mr-2 text-primary" /> Hatırlatma SMS'i Gönder (1 Kredi)
-                  </button>
+                  </Button>
                 )}
 
                 <div className="flex items-center justify-between mb-4">
-                  <h3 className="text-xs font-bold text-gray-400 uppercase tracking-widest flex items-center">
+                  <h3 className="text-xs font-bold text-text-tertiary uppercase tracking-widest flex items-center">
                     <History className="h-4 w-4 mr-1.5" /> İşlem Geçmişi
                   </h3>
                 </div>
                 
                 <div className="space-y-4">
                   {ledgerLoading ? (
-                    <p className="text-center py-5 text-sm text-gray-500"><Loader2 className="h-5 w-5 animate-spin mx-auto" /></p>
+                    <p className="text-center py-5 text-sm text-text-secondary"><Loader2 className="h-5 w-5 animate-spin mx-auto" /></p>
                   ) : ledgerTxs.length === 0 ? (
-                    <div className="flex flex-col items-center justify-center py-10 bg-white rounded-2xl border border-gray-100 border-dashed">
-                      <div className="w-12 h-12 bg-gray-50 rounded-full flex items-center justify-center mb-3">
-                        <History className="h-6 w-6 text-gray-300" />
+                    <div className="flex flex-col items-center justify-center py-10 bg-system-surface rounded-2xl border border-system-border border-dashed">
+                      <div className="w-12 h-12 bg-system-bg rounded-full flex items-center justify-center mb-3">
+                        <History className="h-6 w-6 text-system-border" />
                       </div>
-                      <p className="text-sm font-medium text-gray-500">Henüz işlem bulunmuyor</p>
+                      <p className="text-sm font-medium text-text-secondary">Henüz işlem bulunmuyor</p>
                     </div>
                   ) : (
                     <div className="relative before:absolute before:inset-y-0 before:left-[23px] before:w-[2px] before:bg-gray-200/60 pb-8 space-y-4">
@@ -727,17 +735,17 @@ export const Suppliers = () => {
                               {isDebt ? <ArrowUpRight className="h-4 w-4" /> : <ArrowDownRight className="h-4 w-4" />}
                             </div>
                             
-                            <div className={`${isExternal ? 'bg-blue-50/60 border-blue-100' : 'bg-white border-gray-100'} p-4 rounded-2xl border shadow-sm group-hover:border-primary/40 group-hover:shadow-md transition-all flex justify-between items-center relative overflow-hidden`}>
+                            <div className={`${isExternal ? 'bg-blue-50/60 border-blue-100' : 'bg-system-surface border-system-border'} p-4 rounded-2xl border shadow-sm group-hover:border-primary/40 group-hover:shadow-md transition-all flex justify-between items-center relative overflow-hidden`}>
                               <div className="relative z-10">
                                 <div className="flex items-center gap-2 mb-0.5">
-                                  <p className="text-[15px] font-bold text-gray-900">
+                                  <p className="text-[15px] font-bold text-text-primary">
                                     {isDebt ? 'Borç Eklendi' : 'Tahsilat Alındı'}
                                   </p>
                                   {isExternal && <span className="px-1.5 py-0.5 text-[10px] font-bold bg-blue-100 text-blue-700 rounded-md">DIŞ AĞ</span>}
                                 </div>
-                                <p className="text-xs font-medium text-gray-500 line-clamp-1 mb-1">{tx.description || 'Açıklama yok'}</p>
+                                <p className="text-xs font-medium text-text-secondary line-clamp-1 mb-1">{tx.description || 'Açıklama yok'}</p>
                                 <div className="flex items-center gap-2">
-                                  <p className="text-[11px] text-gray-400 font-semibold tracking-wider">
+                                  <p className="text-[11px] text-text-tertiary font-semibold tracking-wider">
                                     {tx.created_at && new Date(tx.created_at).toLocaleDateString('tr-TR', { month: 'short', day: 'numeric', year: 'numeric' })}
                                     {tx.due_date && (
                                       <span className="ml-2 px-1.5 py-0.5 rounded-md bg-orange-100 text-orange-700 font-bold border border-orange-200">
@@ -747,9 +755,9 @@ export const Suppliers = () => {
                                   </p>
                                   {isMySyncedTx && (
                                     <span className="flex items-center">
-                                      {tx.network_read_status === 'sent' && <Check className="w-3.5 h-3.5 text-gray-400" title="Gönderildi" />}
-                                      {tx.network_read_status === 'read' && <CheckCheck className="w-3.5 h-3.5 text-blue-500" title="Okundu" />}
-                                      {tx.network_read_status === 'disputed' && <AlertCircle className="w-3.5 h-3.5 text-red-500" title="İtiraz Edildi" />}
+                                      {tx.network_read_status === 'sent' && <span title="Gönderildi"><Check className="w-3.5 h-3.5 text-text-tertiary" /></span>}
+                                      {tx.network_read_status === 'read' && <span title="Okundu"><CheckCheck className="w-3.5 h-3.5 text-blue-500" /></span>}
+                                      {tx.network_read_status === 'disputed' && <span title="İtiraz Edildi"><AlertCircle className="w-3.5 h-3.5 text-red-500" /></span>}
                                     </span>
                                   )}
                                 </div>
@@ -758,7 +766,7 @@ export const Suppliers = () => {
                                 <p className={`text-lg font-black tracking-tight ${isDebt ? 'text-red-600' : 'text-green-600'}`}>
                                   {isDebt ? '+' : '-'}{tx.amount.toLocaleString('tr-TR')} <span className="text-sm">₺</span>
                                 </p>
-                                <div className="mt-1 inline-flex items-center px-2 py-0.5 rounded-md bg-white border border-gray-100 shadow-sm text-[10px] font-bold text-gray-500 uppercase tracking-wider">
+                                <div className="mt-1 inline-flex items-center px-2 py-0.5 rounded-md bg-system-surface border border-system-border shadow-sm text-[10px] font-bold text-text-secondary uppercase tracking-wider">
                                   {tx.payment_method === 'cash' ? 'Nakit' : tx.payment_method === 'credit_card' ? 'Kart' : tx.payment_method === 'veresiye' ? 'Açık Hesap' : 'Havale'}
                                 </div>
                               </div>
@@ -781,22 +789,43 @@ export const Suppliers = () => {
       <BottomSheet isOpen={isTxModalOpen} onClose={() => setIsTxModalOpen(false)} title={txActionType === 'add_debt' ? 'Manuel Borç Ekle' : 'Tahsilat Al'}>
         <div className="space-y-4 pt-4 pb-8">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Tutar (₺)</label>
-            <Input type="number" placeholder="0.00" value={txAmount} onChange={e => setTxAmount(e.target.value)} className="text-lg font-bold" />
+            <label className="block text-subhead font-medium text-text-secondary mb-1">Tutar (₺)</label>
+            <Input type="number" placeholder="0.00" value={txAmount} onChange={e => setTxAmount(e.target.value)} />
           </div>
           
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Açıklama (İsteğe Bağlı)</label>
+            <label className="block text-subhead font-medium text-text-secondary mb-1">Açıklama (İsteğe Bağlı)</label>
             <Input placeholder={txActionType === 'add_debt' ? 'Örn: 2 koli yumurta' : 'Örn: Elden nakit alındı'} value={txDesc} onChange={e => setTxDesc(e.target.value)} />
           </div>
 
           {txActionType === 'collect_payment' && (
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Ödeme Yöntemi</label>
-              <div className="flex space-x-2">
-                <button onClick={() => setTxPaymentMethod('cash')} className={`flex-1 py-2 text-sm rounded-md font-semibold transition-all ${txPaymentMethod === 'cash' ? 'bg-primary text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}>Nakit</button>
-                <button onClick={() => setTxPaymentMethod('credit_card')} className={`flex-1 py-2 text-sm rounded-md font-semibold transition-all ${txPaymentMethod === 'credit_card' ? 'bg-primary text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}>Kart</button>
-                <button onClick={() => setTxPaymentMethod('transfer')} className={`flex-1 py-2 text-sm rounded-md font-semibold transition-all ${txPaymentMethod === 'transfer' ? 'bg-primary text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}>EFT/Havale</button>
+              <label className="block text-subhead font-medium text-text-secondary mb-1">Ödeme Yöntemi</label>
+              <div className="flex gap-2">
+                <Button 
+                  onClick={() => setTxPaymentMethod('cash')} 
+                  variant={txPaymentMethod === 'cash' ? 'primary' : 'secondary'}
+                  size="md"
+                  className="flex-1"
+                >
+                  Nakit
+                </Button>
+                <Button 
+                  onClick={() => setTxPaymentMethod('credit_card')} 
+                  variant={txPaymentMethod === 'credit_card' ? 'primary' : 'secondary'}
+                  size="md"
+                  className="flex-1"
+                >
+                  Kart
+                </Button>
+                <Button 
+                  onClick={() => setTxPaymentMethod('transfer')} 
+                  variant={txPaymentMethod === 'transfer' ? 'primary' : 'secondary'}
+                  size="md"
+                  className="flex-1"
+                >
+                  EFT/Havale
+                </Button>
               </div>
             </div>
           )}
@@ -804,11 +833,11 @@ export const Suppliers = () => {
           {txActionType === 'add_debt' && (
             <>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">İşlem Tarihi (Geçmişe dönük)</label>
+                <label className="block text-subhead font-medium text-text-secondary mb-1">İşlem Tarihi (Geçmişe dönük)</label>
                 <Input type="date" value={txDate} onChange={e => setTxDate(e.target.value)} />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Söz Verilen Ödeme Tarihi</label>
+                <label className="block text-subhead font-medium text-text-secondary mb-1">Söz Verilen Ödeme Tarihi</label>
                 <Input type="date" value={txDueDate} onChange={e => setTxDueDate(e.target.value)} />
               </div>
             </>
@@ -818,7 +847,6 @@ export const Suppliers = () => {
             {editingTx && (
               <Button 
                 variant="danger"
-                className="flex-shrink-0 px-4"
                 onClick={handleDeleteTransaction}
                 disabled={deleteTransactionMutation.isPending || addTransactionMutation.isPending || updateTransactionMutation.isPending}
               >
@@ -846,8 +874,8 @@ export const Suppliers = () => {
           </div>
           
           <div>
-            <h3 className="text-xl font-bold text-gray-900 mb-2">Mavi Tikli Veresiye</h3>
-            <p className="text-sm text-gray-500 leading-relaxed max-w-sm mx-auto">
+            <h3 className="text-xl font-bold text-text-primary mb-2">Mavi Tikli Veresiye</h3>
+            <p className="text-sm text-text-secondary leading-relaxed max-w-sm mx-auto">
               Toptancınıza bir davet gönderin. Kabul ettiğinde, karşılıklı girdiğiniz tüm borçlar ve ödemeler otomatik olarak senkronize edilir.
             </p>
           </div>
@@ -856,7 +884,7 @@ export const Suppliers = () => {
             {!networkLink ? (
               <Button 
                 onClick={handleCreateNetworkLink} 
-                className="w-full" 
+                fullWidth 
                 size="lg"
                 isLoading={createNetworkLink.isPending}
               >
@@ -864,9 +892,9 @@ export const Suppliers = () => {
               </Button>
             ) : (
               <div className="space-y-4">
-                <div className="p-4 bg-gray-50 border border-gray-200 rounded-xl">
-                  <p className="text-xs font-bold text-gray-500 uppercase mb-2">Davet Kodu</p>
-                  <p className="text-3xl font-black text-gray-900 tracking-widest">{networkLink.link_code}</p>
+                <div className="p-4 bg-system-bg border border-system-border rounded-xl">
+                  <p className="text-xs font-bold text-text-secondary uppercase mb-2">Davet Kodu</p>
+                  <p className="text-3xl font-black text-text-primary tracking-widest">{networkLink.link_code}</p>
                 </div>
                 
                 {networkLink.status === 'pending' && (

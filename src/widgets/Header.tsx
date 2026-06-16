@@ -1,54 +1,74 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { ChevronLeft, Menu } from 'lucide-react';
 import { useAuth } from '@/app/providers/AuthProvider';
 import { useNavigate } from 'react-router-dom';
 import { useUIStore } from '@/shared/store/uiStore';
+import { useTenant } from '@/app/providers/TenantProvider';
 
-interface HeaderProps {
+export interface HeaderProps {
   title: string;
   subtitle?: string;
   rightElement?: React.ReactNode;
   backTo?: string;
 }
 
-export const Header = ({ title, rightElement, backTo }: HeaderProps) => {
+// 1. Pages use this component invisibly to set the header state
+export const Header = ({ title, subtitle, rightElement, backTo }: HeaderProps) => {
+  const setHeader = useUIStore((state) => state.setHeader);
+
+  useEffect(() => {
+    setHeader(title, subtitle, rightElement, backTo);
+    return () => setHeader('Yükleniyor...', '', undefined, undefined); // cleanup
+  }, [title, subtitle, rightElement, backTo, setHeader]);
+
+  return null; // This component doesn't render anything directly
+};
+
+// 2. Layout uses this component to actually render the global header
+export const AppHeader = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
-  const { toggleSidebar } = useUIStore();
+  const { tenantName } = useTenant();
+  const { toggleSidebar, headerTitle, headerSubtitle, headerRightElement, headerBackTo } = useUIStore();
   
   return (
-    <header className="sticky top-0 z-40 flex items-center justify-between min-h-[56px] bg-gray-100/90 backdrop-blur-md border-b border-gray-200/50 mb-6 w-auto -mx-4 sm:-mx-6 lg:-mx-10 px-4 sm:px-6 lg:px-10 -mt-6 lg:-mt-10 pt-6 lg:pt-10 pb-4">
-      {/* Left Action */}
-      <div className="flex items-center justify-start min-w-[80px]">
-        {backTo ? (
-          <button 
-            onClick={() => navigate(backTo)}
-            className="w-10 h-10 flex items-center justify-center text-gray-700 hover:bg-gray-100 rounded-full transition-colors"
-          >
-            <ChevronLeft className="w-6 h-6" />
-          </button>
-        ) : (
-          <button 
-            onClick={toggleSidebar}
-            className="w-10 h-10 flex lg:hidden items-center justify-center text-gray-700 hover:bg-gray-100 rounded-full transition-colors"
-          >
-            <Menu className="w-6 h-6" />
-          </button>
-        )}
-      </div>
-
-      {/* Center Title Area */}
-      <div className="flex flex-col items-center justify-center text-center px-4 flex-1 min-w-0">
-        <h1 className="text-[15px] font-bold text-gray-900 tracking-tight truncate w-full flex items-center justify-center gap-1.5">
-          <span className="w-5 h-5 bg-primary/10 text-primary rounded flex items-center justify-center text-[11px]">🏪</span>
-          {user?.name || 'İşletmem'}
-        </h1>
-        <p className="text-[11px] font-semibold text-gray-400 uppercase tracking-wider truncate w-full mt-0.5">{title}</p>
-      </div>
-      
-      {/* Right Action */}
-      <div className="flex items-center justify-end min-w-[80px]">
-        {rightElement && rightElement}
+    <header className="shrink-0 z-40 bg-system-bg/90 backdrop-blur-md border-b border-system-border/50">
+      <div className="flex items-center justify-between min-h-[64px] px-4 sm:px-6 lg:px-8 py-3 max-w-7xl mx-auto w-full">
+        {/* Left Action & Title */}
+        <div className="flex items-center justify-start flex-1 min-w-0">
+          <div className="flex items-center gap-3">
+            {headerBackTo ? (
+              <button 
+                onClick={() => navigate(headerBackTo)}
+                className="w-10 h-10 flex items-center justify-center text-text-secondary hover:bg-glass-highlight rounded-full transition-colors flex-shrink-0"
+              >
+                <ChevronLeft className="w-6 h-6" />
+              </button>
+            ) : (
+              <button 
+                onClick={toggleSidebar}
+                className="w-10 h-10 flex lg:hidden items-center justify-center text-text-secondary hover:bg-glass-highlight rounded-full transition-colors flex-shrink-0 -ml-2"
+              >
+                <Menu className="w-6 h-6" />
+              </button>
+            )}
+            
+            <div className="flex flex-col min-w-0">
+              <h1 className="text-title-2 font-bold text-text-primary tracking-tight truncate flex items-center gap-2">
+                <span className="lg:hidden text-primary text-body">🏪</span>
+                {headerTitle}
+              </h1>
+              {headerSubtitle && (
+                <p className="text-body font-medium text-text-secondary truncate mt-0.5">{headerSubtitle}</p>
+              )}
+            </div>
+          </div>
+        </div>
+        
+        {/* Right Action */}
+        <div className="flex items-center justify-end min-w-max pl-4">
+          {headerRightElement && headerRightElement}
+        </div>
       </div>
     </header>
   );

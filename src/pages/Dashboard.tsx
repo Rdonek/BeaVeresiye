@@ -2,11 +2,14 @@ import React, { useState, useEffect } from 'react';
 import { supabase } from '@/shared/api/supabase';
 import { useTenant } from '@/app/providers/TenantProvider';
 import { motion } from 'framer-motion';
-import { Wallet, QrCode, Plus, ArrowDownLeft, ArrowUpRight, Package, ArrowRight, Calendar } from 'lucide-react';
+import { Wallet, QrCode, Plus, ArrowDownLeft, ArrowUpRight, Package, ArrowRight, Calendar, Loader2 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { Header } from '@/widgets/Header';
 import { QuickVeresiyeModal } from '@/widgets/QuickVeresiyeModal';
 import { EmptyState } from '@/shared/ui/EmptyState';
+import { DataList } from '@/shared/ui/DataList';
+import { Button } from '@/shared/ui/Button';
+import { HeroCard } from '@/shared/ui/HeroCard';
 
 export const Dashboard = () => {
   const { tenantId, tenantName } = useTenant();
@@ -80,129 +83,107 @@ export const Dashboard = () => {
   };
 
   const actionButtons = [
-    { id: 'pos', icon: QrCode, label: 'Hızlı Satış', bg: 'bg-primary border border-primary shadow-md shadow-primary/20', text: 'text-gray-800 font-bold', iconColor: 'text-white', action: () => navigate('/pos') },
-    { id: 'veresiye', icon: Plus, label: 'Veresiye Yaz', bg: 'bg-white border border-red-200 shadow-sm', text: 'text-gray-800 font-bold', iconColor: 'text-red-500', action: () => setIsVeresiyeModalOpen(true) },
-    { id: 'receive', icon: ArrowDownLeft, label: 'Tahsilat', bg: 'bg-white border border-gray-200 shadow-sm', text: 'text-gray-800 font-bold', iconColor: 'text-gray-700', action: () => navigate('/customers') },
-    { id: 'expense', icon: Wallet, label: 'Masraf Gir', bg: 'bg-white border border-gray-200 shadow-sm', text: 'text-gray-800 font-bold', iconColor: 'text-gray-700', action: () => navigate('/transactions') },
+    { id: 'pos', icon: QrCode, label: 'Hızlı Satış', bg: 'bg-primary border border-primary shadow-sm', text: 'text-text-primary font-bold', iconColor: 'text-white', action: () => navigate('/pos') },
+    { id: 'veresiye', icon: Plus, label: 'Veresiye Yaz', bg: 'bg-system-surface border border-system-border shadow-sm', text: 'text-text-primary font-bold', iconColor: 'text-red-500', action: () => setIsVeresiyeModalOpen(true) },
+    { id: 'receive', icon: ArrowDownLeft, label: 'Tahsilat', bg: 'bg-system-surface border border-system-border shadow-sm', text: 'text-text-primary font-bold', iconColor: 'text-text-secondary', action: () => navigate('/customers') },
+    { id: 'expense', icon: Wallet, label: 'Masraf Gir', bg: 'bg-system-surface border border-system-border shadow-sm', text: 'text-text-primary font-bold', iconColor: 'text-text-secondary', action: () => navigate('/transactions') },
   ];
 
   return (
-    <div className="flex flex-col gap-6 w-full pb-20">
+    <div className="flex flex-col h-full w-full gap-4 lg:gap-6 pb-2 overflow-hidden">
       <Header title="Özet" subtitle="İşletmenizin anlık durumu" />
-      <div className="flex flex-col gap-6 w-full max-w-5xl mx-auto">
       
-      {/* Premium Main Card */}
-      <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="flex flex-col gap-4">
-        
-        {/* Top Dark Card (Ciro) */}
-        <div className="relative bg-gradient-to-br from-slate-800 to-slate-900 rounded-3xl p-5 sm:p-6 text-white overflow-hidden shadow-xl shadow-slate-900/10">
-          <div className="absolute top-0 right-0 w-64 h-64 bg-primary opacity-10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/3"></div>
+      <div className="flex flex-col gap-4 lg:gap-6 shrink-0">
           
-          <div className="relative z-10 flex flex-col gap-1">
-            <h2 className="text-slate-400 text-[10px] sm:text-xs font-bold tracking-[0.15em] uppercase">Bugünkü Kasa (Ciro)</h2>
-            <div className="flex items-baseline gap-1 mt-1 flex-wrap">
-              <span className="text-3xl sm:text-4xl font-black tracking-tight break-all">
-                {loading ? "..." : stats.dailySales.toLocaleString('tr-TR', { minimumFractionDigits: 2 })}
-              </span>
-              <span className="text-xl sm:text-2xl font-bold text-slate-400 ml-1">TL</span>
-            </div>
-          </div>
-        </div>
+        {/* Unified Hero Stats Card (Matching Kasa) */}
+        <HeroCard>
+          <HeroCard.Header 
+            title="Bugünkü Kasa (Ciro)" 
+            value={loading ? "..." : stats.dailySales.toLocaleString('tr-TR', { minimumFractionDigits: 2 })} 
+            unit="TL" 
+          />
+          <HeroCard.Grid>
+            <HeroCard.Stat 
+              title="Piyasadaki Alacak" 
+              value={loading ? "..." : stats.customerDebt.toLocaleString('tr-TR')} 
+              unit="TL" 
+            />
+            <HeroCard.Stat 
+              title="Azalan Stok" 
+              value={loading ? "..." : stats.lowStockItems} 
+              unit="Ürün" 
+              isRight={true}
+              indicator={stats.lowStockItems > 0 && <span className="w-2 h-2 rounded-full bg-danger shadow-sm animate-pulse ml-1"></span>}
+            />
+          </HeroCard.Grid>
+        </HeroCard>
 
-        {/* Secondary Stats Grid */}
-        <div className="grid grid-cols-2 gap-3 sm:gap-4">
-          <div className="bg-white rounded-3xl p-5 border border-gray-100 shadow-sm flex flex-col gap-1">
-            <h3 className="text-gray-500 text-[10px] sm:text-xs font-bold tracking-wider uppercase mb-1">Piyasadaki Alacak</h3>
-            <div className="flex items-baseline gap-1">
-              <span className="text-xl sm:text-2xl font-extrabold text-gray-900 truncate">
-                {loading ? "..." : stats.customerDebt.toLocaleString('tr-TR')}
-              </span>
-              <span className="text-sm font-bold text-gray-400">TL</span>
-            </div>
-          </div>
-          
-          <div className="bg-white rounded-3xl p-5 border border-gray-100 shadow-sm flex flex-col gap-1">
-            <h3 className="text-gray-500 text-[10px] sm:text-xs font-bold tracking-wider uppercase mb-1">Azalan Stok</h3>
-            <div className="flex items-center gap-2">
-              <span className="text-xl sm:text-2xl font-extrabold text-gray-900">
-                {loading ? "..." : stats.lowStockItems} <span className="text-sm font-bold text-gray-400">Ürün</span>
-              </span>
-              {stats.lowStockItems > 0 && (
-                <span className="w-2 h-2 rounded-full bg-red-500 shadow-[0_0_8px_rgba(239,68,68,0.8)] animate-pulse"></span>
-              )}
-            </div>
-          </div>
+        {/* Quick Actions Grid */}
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+          <Button onClick={() => navigate('/pos')} variant="primary" size="sm" fullWidth>
+            <QrCode className="w-4 h-4 mr-1.5" /> Hızlı Satış
+          </Button>
+          <Button onClick={() => setIsVeresiyeModalOpen(true)} variant="danger" size="sm" fullWidth>
+            <Plus className="w-4 h-4 mr-1.5" /> Veresiye Yaz
+          </Button>
+          <Button onClick={() => navigate('/customers')} variant="secondary" size="sm" fullWidth>
+            <ArrowDownLeft className="w-4 h-4 mr-1.5 text-success" /> Tahsilat
+          </Button>
+          <Button onClick={() => navigate('/transactions')} variant="secondary" size="sm" fullWidth>
+            <Wallet className="w-4 h-4 mr-1.5 text-text-tertiary" /> Masraf Gir
+          </Button>
         </div>
-      </motion.div>
-
-      {/* Quick Actions (Zarif, Orantılı Grid) */}
-      <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }} className="mt-2">
-        <h3 className="text-[13px] font-bold text-gray-900 mb-3 ml-2 tracking-wide uppercase">Hızlı İşlemler</h3>
-        <div className="grid grid-cols-4 gap-2 sm:gap-4 px-1">
-          {actionButtons.map((btn) => (
-            <button
-              key={btn.id}
-              onClick={btn.action}
-              className="flex flex-col items-center gap-2 sm:gap-3 group"
-            >
-              <div className={`w-14 h-14 sm:w-16 sm:h-16 rounded-2xl flex items-center justify-center transition-transform active:scale-90 ${btn.bg}`}>
-                <btn.icon className={`w-6 h-6 sm:w-7 sm:h-7 ${btn.iconColor}`} strokeWidth={2.5} />
-              </div>
-              <span className={`text-[12px] sm:text-xs text-center leading-tight ${btn.text}`}>
-                {btn.label}
-              </span>
-            </button>
-          ))}
-        </div>
-      </motion.div>
-
-      <div className="flex flex-col xl:flex-row gap-6 mt-4">
-        {/* Recent Transactions list */}
-        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }} className="flex-1 flex flex-col gap-3">
-          <div className="flex justify-between items-center ml-2 mr-2">
-            <h3 className="text-[13px] font-bold text-gray-900 tracking-wide uppercase">Son Hareketler</h3>
-            <button onClick={() => navigate('/transactions')} className="text-[11px] font-bold text-primary hover:bg-primary/10 px-3 py-1.5 rounded-full transition-colors uppercase tracking-wider">Tümü</button>
-          </div>
-          
-          <div className="bg-white rounded-[24px] border border-gray-100 shadow-sm flex flex-col relative">
-            {loading ? (
-              <div className="p-12 flex justify-center text-gray-300"><Wallet className="w-8 h-8 animate-pulse" /></div>
-            ) : recentTxs.length === 0 ? (
-              <div className="py-8">
-                <EmptyState 
-                  icon={Calendar} 
-                  title="İşlem Yok" 
-                  description="Henüz bir finansal hareket bulunmuyor." 
-                />
-              </div>
-            ) : (
-              <div className="divide-y divide-gray-50/80">
-                {recentTxs.map((tx) => (
-                  <div key={tx.id} className="flex items-center justify-between p-4 sm:px-6 hover:bg-gray-50/50 transition-colors">
-                    <div className="flex items-center gap-4 min-w-0">
-                      <div className={`w-10 h-10 sm:w-12 sm:h-12 rounded-full flex items-center justify-center shrink-0 ${tx.type === 'expense' ? 'bg-red-50 text-red-500' : 'bg-green-50 text-green-500'}`}>
-                        {tx.type === 'expense' ? <ArrowUpRight className="w-5 h-5" /> : <ArrowDownLeft className="w-5 h-5" />}
-                      </div>
-                      <div className="min-w-0 pr-4">
-                        <p className="font-bold text-[14px] sm:text-[15px] text-gray-900 truncate">
-                          {tx.description || (tx.type === 'sale' ? 'Satış' : tx.type === 'income' ? 'Gelir' : 'Gider')}
-                        </p>
-                        <p className="text-[11px] sm:text-xs text-gray-500 font-semibold mt-0.5 truncate">
-                          {tx.payment_method === 'cash' ? 'Nakit' : tx.payment_method === 'veresiye' ? 'Açık Hesap' : 'Kart'} • {new Date(tx.created_at).toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' })}
-                        </p>
-                      </div>
-                    </div>
-                    <span className={`font-black text-[15px] sm:text-[17px] shrink-0 ${tx.type === 'expense' ? 'text-gray-900' : 'text-green-600'}`}>
-                      {tx.type === 'expense' ? '-' : '+'}{Number(tx.amount).toLocaleString('tr-TR', { minimumFractionDigits: 2 })} TL
-                    </span>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-        </motion.div>
       </div>
 
+      {/* Transactions List */}
+      <div className="flex flex-col flex-1 min-h-0 gap-2 lg:gap-3">
+        <DataList 
+          header={
+            <div className="flex justify-between items-center w-full">
+              <h3 className="text-caption lg:text-subhead font-bold text-text-secondary tracking-wide uppercase">Son Hareketler</h3>
+              <Button onClick={() => navigate('/transactions')} variant="ghost" size="sm" className="text-primary hover:bg-primary/10 uppercase tracking-wider text-[10px] lg:text-caption px-2 py-1">Tümü</Button>
+            </div>
+          }
+        >
+          {loading ? (
+            <div className="flex-1 h-full flex items-center justify-center py-20 text-text-tertiary">
+              <Loader2 className="animate-spin w-8 h-8 text-primary" />
+            </div>
+          ) : recentTxs.length === 0 ? (
+            <div className="flex-1 h-full flex items-center justify-center py-8">
+              <EmptyState 
+                icon={Calendar} 
+                title="İşlem Yok" 
+                description="Henüz bir finansal hareket bulunmuyor." 
+              />
+            </div>
+          ) : (
+            <div className="divide-y divide-system-border/50">
+              {recentTxs.map((tx) => (
+                <div key={tx.id} className="flex items-center justify-between p-4 sm:px-6 hover:bg-glass-highlight transition-colors cursor-pointer group" onClick={() => navigate('/transactions')}>
+                  <div className="flex items-center gap-3 lg:gap-4 min-w-0">
+                    <div className={`w-12 h-12 flex-shrink-0 rounded-xl flex items-center justify-center transition-colors border border-system-border/50 group-hover:bg-primary/5 ${tx.type === 'expense' ? 'text-danger' : 'text-success'}`}>
+                      {tx.type === 'expense' ? <ArrowUpRight className="w-6 h-6" /> : <ArrowDownLeft className="w-6 h-6" />}
+                    </div>
+                    <div className="min-w-0 pr-4">
+                      <p className="font-semibold text-body text-text-primary truncate capitalize">
+                        {tx.description || (tx.type === 'sale' ? 'Satış' : tx.type === 'income' ? 'Gelir' : 'Gider')}
+                      </p>
+                      <p className="text-caption text-text-secondary font-medium mt-0.5 truncate flex gap-2">
+                        <span className="flex-shrink-0">{new Date(tx.created_at).toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' })}</span>
+                        <span className="mx-2 text-system-border">•</span>
+                        <span>{tx.payment_method === 'cash' ? 'Nakit' : tx.payment_method === 'veresiye' ? 'Açık Hesap' : 'Kart'}</span>
+                      </p>
+                    </div>
+                  </div>
+                  <span className={`font-bold text-title-3 flex-shrink-0 ${tx.type === 'expense' ? 'text-text-primary' : 'text-success'}`}>
+                    {tx.type === 'expense' ? '-' : '+'}{Number(tx.amount).toLocaleString('tr-TR', { minimumFractionDigits: 2 })} TL
+                  </span>
+                </div>
+              ))}
+            </div>
+          )}
+        </DataList>
       </div>
       <QuickVeresiyeModal 
         isOpen={isVeresiyeModalOpen} 

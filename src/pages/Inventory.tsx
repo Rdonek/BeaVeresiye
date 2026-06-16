@@ -4,6 +4,7 @@ import { useTenant } from '@/app/providers/TenantProvider';
 import { Input } from '@/shared/ui/Input';
 import { BottomSheet } from '@/shared/ui/BottomSheet';
 import { Button } from '@/shared/ui/Button';
+import { DataList } from '@/shared/ui/DataList';
 import { Search, Package, Plus, ChevronRight, Edit, Trash2, ArrowUpRight, ArrowDownLeft, X, Loader2, FileSpreadsheet, Calculator } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { EmptyState } from '@/shared/ui/EmptyState';
@@ -108,20 +109,23 @@ export const Inventory = () => {
   const isSaving = addProductMutation.isPending || updateProductMutation.isPending;
 
   return (
-    <div className="flex flex-col gap-6 w-full">
-      <Header 
-        title="Stok ve Envanter" 
-        subtitle="Ürünlerinizi yönetin" 
-        rightElement={
-          <button 
-            onClick={() => navigate('/pos')}
-            className="flex items-center text-xs font-bold bg-primary/10 text-primary px-3 py-1.5 rounded-full hover:bg-primary/20 transition-colors"
-          >
-            <Calculator className="w-3.5 h-3.5 mr-1.5" />
-            Hızlı Satış
-          </button>
-        }
-      />
+    <div className="flex flex-col h-full overflow-hidden w-full gap-4 max-w-[1600px] mx-auto">
+      <div className="shrink-0 flex flex-col gap-4">
+        <Header 
+          title="Stok ve Envanter" 
+          subtitle="Ürünlerinizi yönetin" 
+          rightElement={
+            <Button 
+              variant="outline"
+              size="sm"
+              onClick={() => navigate('/pos')}
+            >
+              <Calculator className="w-4 h-4 mr-2" />
+              Hızlı Satış
+            </Button>
+          }
+        />
+      </div>
 
       {/* Top Bar: Search & Action */}
       <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 -mt-2">
@@ -137,9 +141,9 @@ export const Inventory = () => {
           <Button 
             variant="secondary" 
             onClick={() => setIsImportOpen(true)} 
-            className="flex-1 md:flex-none border-gray-200"
+            className="flex-1 md:flex-none"
           >
-            <FileSpreadsheet className="h-4 w-4 mr-2 text-green-600" />
+            <FileSpreadsheet className="h-4 w-4 mr-2 text-success" />
             İçe Aktar
           </Button>
           <Button onClick={() => openModal()} className="flex-1 md:flex-none">
@@ -150,11 +154,13 @@ export const Inventory = () => {
       </div>
 
       {/* Product List */}
-      <Card padding="none" className="overflow-hidden">
-        <div className="px-6 py-4 border-b border-gray-200 bg-gray-50/50">
-          <h3 className="font-semibold text-gray-900">Ürün Listesi</h3>
-        </div>
-        
+      <DataList
+        header={
+          <div className="w-full flex items-center">
+            <h3 className="text-caption lg:text-subhead font-bold text-text-secondary tracking-wide uppercase">Ürün Listesi</h3>
+          </div>
+        }
+      >
         {loading ? (
           <div className="h-full flex items-center justify-center p-12">
             <Loader2 className="h-8 w-8 animate-spin text-primary" />
@@ -171,7 +177,7 @@ export const Inventory = () => {
             />
           </div>
         ) : (
-          <div className="divide-y divide-gray-100">
+          <div className="divide-y divide-system-border">
             <AnimatePresence>
               {filteredProducts.map((p) => (
                 <motion.div 
@@ -179,39 +185,39 @@ export const Inventory = () => {
                   initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, height: 0 }}
-                  className="p-4 sm:px-6 hover:bg-gray-50 transition-colors flex items-center justify-between group cursor-pointer"
+                  className="p-4 sm:px-6 hover:bg-glass-highlight transition-colors flex items-center justify-between group cursor-pointer"
                   onClick={() => openModal(p)}
                 >
-                  <div className="flex items-center gap-4">
-                    <div className="w-12 h-12 rounded-xl bg-gray-100 text-gray-500 flex items-center justify-center group-hover:bg-primary/10 group-hover:text-primary transition-colors">
-                      <Package className="w-6 h-6" />
-                    </div>
-                    <div>
-                      <p className="font-semibold text-gray-900">{p.name}</p>
-                      <p className="text-xs text-gray-500 mt-0.5">
-                        {p.stock_quantity !== null ? `Stok: ${p.stock_quantity} ${p.unit || 'Adet'}` : 'Sınırsız Stok'}
-                        {p.barcode && <span className="ml-2 text-gray-400">| Barkod: {p.barcode}</span>}
-                      </p>
-                    </div>
+                    <div className="flex items-center gap-4">
+                      <div className="w-12 h-12 rounded-xl bg-system-bg text-text-secondary flex items-center justify-center group-hover:bg-primary/10 group-hover:text-primary transition-colors">
+                        <Package className="w-6 h-6" />
+                      </div>
+                      <div>
+                        <p className="font-semibold text-text-primary text-body">{p.name}</p>
+                        <p className="text-caption text-text-secondary mt-0.5">
+                          {p.stock_quantity !== null ? `Stok: ${p.stock_quantity} ${p.unit || 'Adet'}` : 'Sınırsız Stok'}
+                          {p.barcode && <span className="ml-2 text-text-tertiary">| Barkod: {p.barcode}</span>}
+                        </p>
+                      </div>
                   </div>
                   
                   <div className="flex items-center gap-4">
-                    <span className="text-lg font-bold text-gray-900">
+                    <span className="text-title-3 font-bold text-text-primary">
                       {p.price.toLocaleString('tr-TR', { minimumFractionDigits: 2 })} ₺
                     </span>
-                    <ChevronRight className="w-5 h-5 text-gray-400 opacity-0 group-hover:opacity-100 transition-opacity" />
+                    <ChevronRight className="w-5 h-5 text-text-tertiary opacity-0 group-hover:opacity-100 transition-opacity" />
                   </div>
                 </motion.div>
               ))}
             </AnimatePresence>
           </div>
         )}
-      </Card>
+      </DataList>
 
       <BottomSheet isOpen={isAddOpen} onClose={() => setIsAddOpen(false)} title={editingProduct ? "Ürünü Düzenle" : "Yeni Ürün Ekle"}>
         <div className="space-y-4 pt-4 pb-8">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Ürün Adı*</label>
+            <label className="block text-subhead font-medium text-text-secondary mb-1">Ürün Adı*</label>
             <Input 
               placeholder="Örn: Coca Cola 1L" 
               value={name} 
@@ -220,7 +226,7 @@ export const Inventory = () => {
           </div>
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Satış Fiyatı* (₺)</label>
+              <label className="block text-subhead font-medium text-text-secondary mb-1">Satış Fiyatı* (₺)</label>
               <Input 
                 type="number"
                 step="0.01"
@@ -230,7 +236,7 @@ export const Inventory = () => {
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Mevcut Stok</label>
+              <label className="block text-subhead font-medium text-text-secondary mb-1">Mevcut Stok</label>
               <Input 
                 type="number"
                 placeholder="Boş = Sınırsız" 
@@ -241,11 +247,11 @@ export const Inventory = () => {
           </div>
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Birim</label>
+              <label className="block text-subhead font-medium text-text-secondary mb-1">Birim</label>
               <select 
                 value={unit} 
                 onChange={e => setUnit(e.target.value)}
-                className="w-full bg-white border border-gray-300 rounded-md px-3 py-2 text-gray-900 focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all shadow-sm"
+                className="glass-input w-full cursor-pointer"
               >
                 <option value="Adet">Adet</option>
                 <option value="Kg">Kg</option>
@@ -255,7 +261,7 @@ export const Inventory = () => {
               </select>
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Barkod</label>
+              <label className="block text-subhead font-medium text-text-secondary mb-1">Barkod</label>
               <Input 
                 placeholder="Okut veya yaz" 
                 value={barcode} 
@@ -268,7 +274,7 @@ export const Inventory = () => {
             {editingProduct && (
               <Button 
                 variant="danger"
-                className="flex-shrink-0 px-4"
+                size="icon"
                 onClick={handleDeleteProduct}
                 disabled={deleteProductMutation.isPending || isSaving}
               >

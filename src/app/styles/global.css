@@ -4,15 +4,9 @@
 
 @layer base {
   body {
-    @apply text-text-primary font-sans antialiased selection:bg-primary/20 selection:text-primary;
-    background-color: #F3F4F6;
+    @apply text-text-primary font-sans antialiased selection:bg-primary/20 selection:text-primary bg-system-bg;
     overscroll-behavior-y: none;
     -webkit-tap-highlight-color: transparent;
-  }
-
-  :root {
-    --header-height: 80px;
-    --sidebar-width: 280px;
   }
 }
 
@@ -20,16 +14,16 @@
   
   /* Shared Glass Cards - iOS HIG Update: Use rounded-2xl (16px) or 3xl for larger cards */
   .glass-card {
-    @apply bg-white border border-gray-200 shadow-sm rounded-2xl relative;
+    @apply bg-system-surface border border-system-border shadow-sm rounded-2xl relative;
   }
   
   .glass-panel {
-    @apply bg-white border border-gray-200 shadow-md rounded-[20px] relative;
+    @apply bg-system-surface border border-system-border shadow-md rounded-2xl relative;
   }
 
   /* iOS HIG Touch Targets: Minimum 44px height (py-3 approx + line height > 44px) */
   .glass-button {
-    @apply bg-white border border-gray-300 shadow-sm rounded-xl font-medium transition-all hover:bg-gray-50 active:scale-[0.98] active:shadow-sm flex items-center justify-center gap-2 py-3 px-4;
+    @apply bg-system-surface border border-system-border shadow-sm rounded-xl font-medium transition-all hover:bg-glass-highlight active:scale-[0.98] active:shadow-sm flex items-center justify-center gap-2 py-3 px-4 text-text-primary;
   }
   
   .glass-button-primary {
@@ -37,6 +31,6 @@
   }
 
   .glass-input {
-    @apply bg-white border border-gray-300 rounded-xl px-4 py-3 text-text-primary focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all placeholder:text-gray-400 shadow-sm;
+    @apply bg-system-surface border border-system-border rounded-xl px-4 py-3 text-text-primary focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all placeholder:text-text-tertiary shadow-sm;
   }
 }

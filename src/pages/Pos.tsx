@@ -5,12 +5,14 @@ import { useTenant } from '@/app/providers/TenantProvider';
 import { useInventory } from '@/shared/hooks/useInventory';
 import { useEntities, useAddEntity } from '@/shared/hooks/useEntities';
 import { Header } from '@/widgets/Header';
+import { DataList } from '@/shared/ui/DataList';
 import { Button } from '@/shared/ui/Button';
 import { Input } from '@/shared/ui/Input';
 import { BottomSheet } from '@/shared/ui/BottomSheet';
 import { ShoppingCart, Plus, ArrowDownRight, ArrowUpRight, Search, X, Loader2 } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 import { useQueryClient } from '@tanstack/react-query';
+import { motion, AnimatePresence } from 'framer-motion';
 
 export const Pos = () => {
   const { tenantId } = useTenant();
@@ -20,6 +22,7 @@ export const Pos = () => {
   const { data: customers = [] } = useEntities(tenantId);
   const addCustomerMutation = useAddEntity();
   const [isCheckingOut, setIsCheckingOut] = useState(false);
+  const [isCartExpanded, setIsCartExpanded] = useState(false);
 
   const [productSearch, setProductSearch] = useState('');
   const [lines, setLines] = useState<Array<{ product_id: string, name: string, quantity: number, unit_price: number, total: number, max_stock: number | null }>>([]);
@@ -187,168 +190,183 @@ export const Pos = () => {
   };
 
   return (
-    <div className="flex flex-col gap-4 max-w-[1600px] mx-auto w-full min-h-0">
-      <Header title="Hızlı Satış (POS)" subtitle="Ürün seç, sepete ekle, satışı tamamla." />
-      <div className="flex justify-end gap-2 -mt-4 mb-2">
-        <Button variant="outline" onClick={() => { setTxType('income'); setIsSimpleTxOpen(true); }} className="text-green-600 border-green-200 bg-green-50 hover:bg-green-100 flex-shrink-0">
-          <ArrowDownRight className="w-4 h-4 sm:mr-2" /> <span className="hidden sm:inline">Gelir Ekle</span>
-        </Button>
-        <Button variant="outline" onClick={() => { setTxType('expense'); setIsSimpleTxOpen(true); }} className="text-red-600 border-red-200 bg-red-50 hover:bg-red-100 flex-shrink-0">
-          <ArrowUpRight className="w-4 h-4 sm:mr-2" /> <span className="hidden sm:inline">Masraf/Gider</span>
-        </Button>
+    <div className="flex flex-col h-full overflow-hidden w-full gap-4 max-w-[1600px] mx-auto">
+      <div className="shrink-0 flex flex-col gap-2">
+        <Header title="Hızlı Satış (POS)" subtitle="Ürün seç, sepete ekle, satışı tamamla." />
       </div>
 
-      <div className="flex-1 flex flex-col lg:flex-row gap-6 lg:items-start min-h-0">
+      <div className="shrink-0 flex flex-col md:flex-row md:items-center justify-between gap-3 mb-2">
+        <div className="flex-1 w-full md:max-w-md">
+          <Input 
+            icon={<Search className="w-4 h-4 text-text-tertiary" />}
+            placeholder="Ürün Ara (Barkod veya İsim)..." 
+            value={productSearch}
+            onChange={e => setProductSearch(e.target.value)}
+          />
+        </div>
+        <div className="flex justify-end gap-2 shrink-0">
+          <Button variant="secondary" onClick={() => { setTxType('income'); setIsSimpleTxOpen(true); }} className="text-success border-success/20 bg-success/5 hover:bg-success/10">
+            <ArrowDownRight className="w-4 h-4 sm:mr-2" /> <span className="hidden sm:inline">Gelir Ekle</span>
+          </Button>
+          <Button variant="secondary" onClick={() => { setTxType('expense'); setIsSimpleTxOpen(true); }} className="text-danger border-danger/20 bg-danger/5 hover:bg-danger/10">
+            <ArrowUpRight className="w-4 h-4 sm:mr-2" /> <span className="hidden sm:inline">Masraf/Gider</span>
+          </Button>
+        </div>
+      </div>
+
+      <div className="flex-1 flex flex-col min-h-0 overflow-hidden gap-4">
         
-        {/* Sol Taraf: Ürünler Grid */}
-        <div className="flex-1 bg-white rounded-2xl border border-gray-200 shadow-sm flex flex-col overflow-hidden">
-          <div className="p-4 border-b border-gray-100 bg-gray-50/50">
-            <div className="relative">
-              <Search className="w-5 h-5 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
-              <input 
-                type="text" 
-                placeholder="Ürün Ara (Barkod veya İsim)..." 
-                value={productSearch}
-                onChange={e => setProductSearch(e.target.value)}
-                className="w-full pl-10 pr-4 py-3 bg-white border border-gray-200 rounded-xl text-[15px] font-medium outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 shadow-sm transition-all" 
-              />
-            </div>
-          </div>
-          
-          <div className="flex-1 overflow-y-auto p-4 flex flex-col gap-3 min-h-[300px]">
-            {loadingProducts ? (
-              <div className="flex justify-center py-12"><Loader2 className="w-8 h-8 animate-spin text-primary" /></div>
-            ) : filteredProducts.length === 0 ? (
-              <div className="text-center py-12 text-gray-500 font-medium">Ürün bulunamadı.</div>
-            ) : (
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 gap-3">
-                {filteredProducts.map(p => (
-                  <div 
-                    key={p.id} 
-                    onClick={() => handleAddProduct(p)}
-                    className="bg-white border border-gray-200 rounded-2xl p-3 cursor-pointer hover:border-primary/50 hover:bg-primary/[0.02] shadow-sm hover:shadow transition-all active:scale-95 group flex items-center gap-3 relative overflow-hidden"
-                  >
-                    <div className="flex-1 min-w-0 pr-2">
-                      <h3 className="font-bold text-[15px] sm:text-base text-gray-900 leading-tight mb-1 line-clamp-2 group-hover:text-primary transition-colors" title={p.name}>
-                        {p.name}
-                      </h3>
-                      <p className="text-[11px] font-medium text-gray-400 truncate mb-1.5">
-                        {(p as any).category || 'Kategorisiz'}
-                      </p>
-                      
-                      <div className="flex items-center">
-                        <span className="font-extrabold text-base sm:text-lg text-primary">{Number(p.price || 0).toLocaleString('tr-TR')} ₺</span>
-                      </div>
-                    </div>
-
-                    {/* Stock Badge Corner */}
-                    <div className={`absolute top-0 right-0 rounded-bl-xl rounded-tr-2xl px-2 py-0.5 text-[10px] font-bold border-b border-l ${p.stock_quantity === null ? 'bg-blue-50 border-blue-100 text-blue-600' : (p.stock_quantity > 0 ? 'bg-green-50 border-green-100 text-green-600' : 'bg-red-50 border-red-100 text-red-600')}`}>
-                      {p.stock_quantity === null ? 'Sınırsız' : `Stok: ${p.stock_quantity}`}
+        {/* Tam Ekran Ürünler Grid */}
+        <DataList
+          className="flex-1 min-h-0 w-full"
+          contentClassName="p-4 flex flex-col gap-3"
+        >
+          {loadingProducts ? (
+            <div className="flex justify-center py-12"><Loader2 className="w-8 h-8 animate-spin text-primary" /></div>
+          ) : filteredProducts.length === 0 ? (
+            <div className="text-center py-12 text-text-secondary font-medium">Ürün bulunamadı.</div>
+          ) : (
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3">
+              {filteredProducts.map(p => (
+                <div 
+                  key={p.id} 
+                  onClick={() => handleAddProduct(p)}
+                  className="bg-system-surface border border-system-border rounded-2xl p-3 cursor-pointer hover:border-primary/50 hover:bg-glass-highlight shadow-sm hover:shadow transition-all active:scale-95 group flex items-center gap-3 relative overflow-hidden"
+                >
+                  <div className="flex-1 min-w-0 pr-2">
+                    <h3 className="font-bold text-body text-text-primary leading-tight mb-1 line-clamp-2 group-hover:text-primary transition-colors" title={p.name}>
+                      {p.name}
+                    </h3>
+                    <p className="text-caption font-medium text-text-secondary truncate mb-1.5">
+                      {(p as any).category || 'Kategorisiz'}
+                    </p>
+                    
+                    <div className="flex items-center">
+                      <span className="font-extrabold text-title-3 text-primary">{Number(p.price || 0).toLocaleString('tr-TR')} ₺</span>
                     </div>
                   </div>
-                ))}
-              </div>
-            )}
-          </div>
-        </div>
 
-        {/* Sağ Taraf: Sepet */}
-        <div className="w-full lg:w-[400px] xl:w-[450px] bg-white rounded-2xl border border-gray-200 shadow-sm flex flex-col shrink-0 lg:h-full">
-          <div className="p-5 border-b border-gray-100 flex items-center gap-3 bg-gray-50/50 rounded-t-2xl shrink-0">
-            <div className="w-10 h-10 bg-primary/10 rounded-xl flex items-center justify-center text-primary">
-              <ShoppingCart className="w-5 h-5" />
-            </div>
-            <div>
-              <h2 className="font-bold text-gray-900">Satış Sepeti</h2>
-              <p className="text-xs text-gray-500 font-medium">{lines.length} Çeşit Ürün</p>
-            </div>
-          </div>
-
-          <div className="flex-1 overflow-y-auto p-2">
-            {lines.length === 0 ? (
-              <div className="flex flex-col items-center justify-center h-full text-gray-400 gap-3">
-                <ShoppingCart className="w-12 h-12 opacity-20" />
-                <p className="font-medium">Sepetiniz boş</p>
-              </div>
-            ) : (
-              <div className="space-y-2">
-                {lines.map((line) => (
-                  <div key={line.product_id} className="bg-white border border-gray-100 rounded-xl p-3 flex flex-col gap-3 shadow-sm">
-                    <div className="flex justify-between items-start gap-2">
-                      <span className="font-bold text-[15px] text-gray-900 leading-tight">{line.name}</span>
-                      <button onClick={() => handleRemoveLine(line.product_id)} className="text-gray-400 hover:text-red-500 transition-colors shrink-0">
-                        <X className="w-5 h-5" />
-                      </button>
-                    </div>
-                    <div className="flex justify-between items-center">
-                      <div className="flex items-center gap-3 bg-gray-50 rounded-lg p-1 border border-gray-200">
-                        <button onClick={() => handleUpdateLineQuantity(line.product_id, -1)} className="w-8 h-8 rounded-md bg-white border border-gray-200 flex items-center justify-center hover:bg-gray-100 active:scale-95 text-gray-700 font-bold transition-all">-</button>
-                        <span className="font-bold text-[15px] w-6 text-center text-gray-900">{line.quantity}</span>
-                        <button onClick={() => handleUpdateLineQuantity(line.product_id, 1)} className="w-8 h-8 rounded-md bg-white border border-gray-200 flex items-center justify-center hover:bg-gray-100 active:scale-95 text-gray-700 font-bold transition-all">+</button>
-                      </div>
-                      <div className="text-right">
-                        <div className="text-xs text-gray-500 font-medium">{Number(line.unit_price).toLocaleString('tr-TR')} ₺ / br</div>
-                        <div className="font-bold text-lg text-primary">{Number(line.total).toLocaleString('tr-TR')} ₺</div>
-                      </div>
-                    </div>
+                  {/* Stock Badge Corner */}
+                  <div className={`absolute top-0 right-0 rounded-bl-xl rounded-tr-2xl px-2 py-0.5 text-micro font-bold border-b border-l ${p.stock_quantity === null ? 'bg-info/10 border-info/20 text-info' : (p.stock_quantity > 0 ? 'bg-success/10 border-success/20 text-success' : 'bg-danger/10 border-danger/20 text-danger')}`}>
+                    {p.stock_quantity === null ? 'Sınırsız' : `Stok: ${p.stock_quantity}`}
                   </div>
-                ))}
-              </div>
-            )}
-          </div>
-
-          <div className="p-5 border-t border-gray-100 bg-gray-50/80 rounded-b-2xl mt-auto">
-            <div className="flex justify-between items-center mb-6">
-              <span className="text-gray-500 font-bold uppercase tracking-wider text-sm">Genel Toplam</span>
-              <span className="font-extrabold text-3xl text-gray-900 tracking-tight">{grandTotal.toLocaleString('tr-TR')} <span className="text-2xl text-gray-500">₺</span></span>
+                </div>
+              ))}
             </div>
-            <Button 
-              size="lg" 
-              className="w-full h-16 text-xl shadow-xl shadow-primary/25" 
-              disabled={lines.length === 0}
-              onClick={() => setIsCheckoutOpen(true)}
-            >
-              ÖDEME AL
-            </Button>
+          )}
+        </DataList>
+
+        {/* Hızlı Sepet (Bottom Bar / Collapsible) */}
+        {lines.length > 0 && (
+          <div className="shrink-0 bg-system-surface border border-system-border shadow-glass-hover rounded-t-2xl sm:rounded-2xl flex flex-col overflow-hidden transition-all relative z-10 mx-auto w-full max-w-4xl">
+            {/* Açılır Kapanır Ürün Listesi */}
+            <AnimatePresence>
+              {isCartExpanded && (
+                <motion.div 
+                  initial={{ height: 0, opacity: 0 }}
+                  animate={{ height: 'auto', opacity: 1 }}
+                  exit={{ height: 0, opacity: 0 }}
+                  transition={{ duration: 0.2, ease: 'easeInOut' }}
+                  className="max-h-[35vh] overflow-y-auto border-b border-system-border divide-y divide-system-border"
+                >
+                  <div className="p-2 space-y-1 bg-system-bg/50">
+                    {lines.map((line) => (
+                      <div key={line.product_id} className="flex items-center justify-between gap-3 p-2 hover:bg-glass-highlight rounded-lg transition-colors">
+                        <div className="flex items-center gap-3 flex-1 min-w-0">
+                          <Button variant="ghost" size="sm" onClick={() => handleRemoveLine(line.product_id)} className="w-8 h-8 min-h-0 p-0 text-text-tertiary hover:text-danger shrink-0">
+                            <X className="w-4 h-4" />
+                          </Button>
+                          <div className="flex items-center gap-1 bg-system-bg border border-system-border rounded p-0.5 shrink-0">
+                            <Button variant="secondary" size="sm" onClick={() => handleUpdateLineQuantity(line.product_id, -1)} className="w-6 h-6 min-h-0 p-0 rounded text-text-secondary font-bold">-</Button>
+                            <span className="w-6 text-center text-body font-bold text-text-primary">{line.quantity}</span>
+                            <Button variant="secondary" size="sm" onClick={() => handleUpdateLineQuantity(line.product_id, 1)} className="w-6 h-6 min-h-0 p-0 rounded text-text-secondary font-bold">+</Button>
+                          </div>
+                          <span className="font-bold text-body text-text-primary truncate">{line.name}</span>
+                        </div>
+                        <div className="text-right shrink-0">
+                          <div className="text-caption text-text-secondary font-medium">{Number(line.unit_price).toLocaleString('tr-TR')} ₺</div>
+                          <span className="font-extrabold text-title-3 text-primary">{Number(line.total).toLocaleString('tr-TR')} ₺</span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
+
+            {/* Alt Toplam ve Ödeme Butonu */}
+            <div className="p-3 sm:p-4 flex flex-col sm:flex-row items-center justify-between gap-3 bg-system-surface">
+              <div 
+                className="flex items-center gap-3 cursor-pointer group flex-1 w-full sm:w-auto"
+                onClick={() => setIsCartExpanded(!isCartExpanded)}
+              >
+                <div className="w-12 h-12 bg-primary/10 rounded-xl flex items-center justify-center text-primary shrink-0 relative transition-transform active:scale-95">
+                  <ShoppingCart className="w-6 h-6" />
+                  <span className="absolute -top-1 -right-1 flex items-center justify-center px-1.5 h-5 min-w-[20px] rounded-full bg-danger text-white text-[10px] font-black shadow-sm">
+                    {lines.reduce((acc, l) => acc + l.quantity, 0)}
+                  </span>
+                </div>
+                <div className="flex-1">
+                  <div className="flex items-center gap-2">
+                    <span className="text-caption font-bold text-text-secondary uppercase tracking-wider">Genel Toplam</span>
+                    <span className="text-micro font-bold text-primary px-1.5 py-0.5 rounded bg-primary/10 transition-colors group-hover:bg-primary/20">
+                      {isCartExpanded ? 'Sepeti Gizle' : 'Sepeti Gör'}
+                    </span>
+                  </div>
+                  <div className="font-extrabold text-title-2 text-text-primary tracking-tight">{grandTotal.toLocaleString('tr-TR')} ₺</div>
+                </div>
+              </div>
+              
+              <Button 
+                size="lg" 
+                className="w-full sm:w-auto shrink-0 shadow-xl shadow-primary/25" 
+                onClick={() => setIsCheckoutOpen(true)}
+              >
+                ÖDEME AL
+              </Button>
+            </div>
           </div>
-        </div>
+        )}
       </div>
 
       {/* Checkout Modal */}
       <BottomSheet isOpen={isCheckoutOpen} onClose={() => setIsCheckoutOpen(false)} title="Ödeme Al">
         <div className="space-y-6 pt-4 pb-8">
           <div className="bg-primary/5 border border-primary/20 rounded-2xl p-6 text-center">
-            <p className="text-sm font-bold text-primary mb-1 uppercase tracking-wider">Tahsil Edilecek Tutar</p>
-            <p className="text-4xl font-extrabold text-gray-900">{grandTotal.toLocaleString('tr-TR')} ₺</p>
+            <p className="text-caption font-bold text-primary mb-1 uppercase tracking-wider">Tahsil Edilecek Tutar</p>
+            <p className="text-title-1 font-extrabold text-text-primary">{grandTotal.toLocaleString('tr-TR')} ₺</p>
           </div>
 
           <div>
-            <label className="block text-sm font-bold text-gray-700 mb-3">Ödeme Yöntemi</label>
+            <label className="block text-sm font-bold text-text-secondary mb-3">Ödeme Yöntemi</label>
             <div className="grid grid-cols-3 gap-3">
-              <button
+              <Button
                 onClick={() => setPaymentMethod('cash')}
-                className={`py-3 rounded-xl border-2 font-bold text-sm transition-all ${paymentMethod === 'cash' ? 'border-primary bg-primary/10 text-primary' : 'border-gray-200 bg-white text-gray-600'}`}
+                variant={paymentMethod === 'cash' ? 'primary' : 'secondary'}
+                size="lg"
               >
                 Nakit
-              </button>
-              <button
+              </Button>
+              <Button
                 onClick={() => setPaymentMethod('credit_card')}
-                className={`py-3 rounded-xl border-2 font-bold text-sm transition-all ${paymentMethod === 'credit_card' ? 'border-primary bg-primary/10 text-primary' : 'border-gray-200 bg-white text-gray-600'}`}
+                variant={paymentMethod === 'credit_card' ? 'primary' : 'secondary'}
+                size="lg"
               >
                 Kredi Kartı
-              </button>
-              <button
+              </Button>
+              <Button
                 onClick={() => setPaymentMethod('veresiye')}
-                className={`py-3 rounded-xl border-2 font-bold text-sm transition-all ${paymentMethod === 'veresiye' ? 'border-orange-500 bg-orange-50 text-orange-700' : 'border-gray-200 bg-white text-gray-600'}`}
+                variant={paymentMethod === 'veresiye' ? 'danger' : 'secondary'}
+                size="lg"
               >
                 Veresiye
-              </button>
+              </Button>
             </div>
           </div>
 
           <div className={`transition-all duration-300 ${paymentMethod === 'veresiye' ? 'opacity-100 block' : 'opacity-60 block'}`}>
             <div className="flex justify-between items-end mb-2">
-              <label className="block text-sm font-bold text-gray-700">Müşteri Seçimi {paymentMethod === 'veresiye' && <span className="text-red-500">*</span>}</label>
+              <label className="block text-sm font-bold text-text-secondary">Müşteri Seçimi {paymentMethod === 'veresiye' && <span className="text-danger">*</span>}</label>
               {!isAddingCustomer && (
                 <button 
                   onClick={() => setIsAddingCustomer(true)} 
@@ -360,10 +378,10 @@ export const Pos = () => {
             </div>
 
             {isAddingCustomer ? (
-              <div className="bg-gray-50 border border-gray-200 rounded-xl p-3 mb-2 animate-in fade-in slide-in-from-top-2">
+              <div className="bg-system-bg border border-system-border rounded-xl p-3 mb-2 animate-in fade-in slide-in-from-top-2">
                 <div className="flex justify-between items-center mb-2">
-                  <h4 className="text-xs font-bold text-gray-500 uppercase">Hızlı Müşteri Ekle</h4>
-                  <button onClick={() => setIsAddingCustomer(false)} className="text-gray-400 hover:text-gray-600">
+                  <h4 className="text-xs font-bold text-text-secondary uppercase">Hızlı Müşteri Ekle</h4>
+                  <button onClick={() => setIsAddingCustomer(false)} className="text-text-tertiary hover:text-text-secondary">
                     <X className="w-4 h-4" />
                   </button>
                 </div>
@@ -390,7 +408,7 @@ export const Pos = () => {
               </div>
             ) : (
               <select 
-                className={`w-full bg-white border rounded-xl px-4 py-3 text-[15px] font-medium outline-none transition-all ${paymentMethod === 'veresiye' && !customerId ? 'border-red-300 focus:border-red-500 focus:ring-2 focus:ring-red-200' : 'border-gray-300 focus:border-primary focus:ring-2 focus:ring-primary/20'}`}
+                className="glass-input w-full cursor-pointer"
                 value={customerId}
                 onChange={e => setCustomerId(e.target.value)}
               >
@@ -401,14 +419,16 @@ export const Pos = () => {
               </select>
             )}
             {paymentMethod === 'veresiye' && !customerId && !isAddingCustomer && (
-              <p className="text-xs font-bold text-red-500 mt-2">Veresiye işlem için cari seçimi zorunludur!</p>
+              <p className="text-xs font-bold text-danger mt-2">Veresiye işlem için cari seçimi zorunludur!</p>
             )}
           </div>
 
           <Button 
             onClick={handleCheckout} 
             disabled={isCheckingOut || (paymentMethod === 'veresiye' && !customerId)} 
-            className="w-full h-14 text-lg mt-6" 
+            size="lg"
+            fullWidth
+            className="mt-6" 
           >
             {isCheckingOut ? <><Loader2 className="w-5 h-5 mr-2 animate-spin" /> İşleniyor...</> : 'Satışı Tamamla'}
           </Button>
@@ -419,14 +439,14 @@ export const Pos = () => {
       <BottomSheet isOpen={isSimpleTxOpen} onClose={() => setIsSimpleTxOpen(false)} title={txType === 'income' ? 'Gelir Ekle' : 'Masraf / Gider Ekle'}>
         <div className="space-y-5 pt-4 pb-8">
           <div>
-            <label className="block text-sm font-bold text-gray-700 mb-2">Tutar (TL)</label>
+            <label className="block text-sm font-bold text-text-secondary mb-2">Tutar (TL)</label>
             <Input type="number" placeholder="0.00" value={txAmount} onChange={e => setTxAmount(e.target.value)} />
           </div>
           <div>
-            <label className="block text-sm font-bold text-gray-700 mb-2">Açıklama</label>
+            <label className="block text-sm font-bold text-text-secondary mb-2">Açıklama</label>
             <Input placeholder="Örn: Elektrik Faturası, Çaycı..." value={txDesc} onChange={e => setTxDesc(e.target.value)} />
           </div>
-          <Button onClick={handleSimpleTx} disabled={!txAmount} className={`w-full mt-4 h-12 text-base ${txType === 'expense' ? 'bg-red-600 hover:bg-red-700' : 'bg-green-600 hover:bg-green-700'}`}>
+          <Button onClick={handleSimpleTx} disabled={!txAmount} variant={txType === 'expense' ? 'danger' : 'primary'} size="lg" fullWidth className="mt-4">
             Kaydet
           </Button>
         </div>

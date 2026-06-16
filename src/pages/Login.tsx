@@ -98,7 +98,7 @@ export const Login = () => {
   };
 
   return (
-    <div className="flex min-h-screen flex-col relative overflow-hidden bg-gray-50">
+    <div className="flex min-h-screen flex-col relative bg-system-bg">
       
       {/* Brand Header */}
       <div className="flex flex-col items-center pt-8 pb-4 sm:pt-12 sm:pb-6 relative z-10">
@@ -107,7 +107,7 @@ export const Login = () => {
           animate={{ scale: 1, opacity: 1 }}
           transition={{ duration: 0.5, type: 'spring', bounce: 0.35 }}
         >
-          <div className="h-20 w-20 rounded-xl bg-white shadow-sm flex items-center justify-center border border-gray-200 p-3">
+          <div className="h-20 w-20 rounded-xl bg-system-surface shadow-sm flex items-center justify-center border border-system-border p-3">
             <img
               src="/bidefter_icon.svg"
               alt="Bidefter"
@@ -122,8 +122,8 @@ export const Login = () => {
           transition={{ duration: 0.4, delay: 0.1 }}
           className="mt-4 text-center"
         >
-          <h1 className="text-3xl font-bold text-gray-900 tracking-tight">Bidefter</h1>
-          <p className="mt-1 text-sm font-semibold text-gray-500 uppercase tracking-widest">Smart Business</p>
+          <h1 className="text-title-1 font-bold text-text-primary tracking-tight">Bidefter</h1>
+          <p className="mt-1 text-caption font-semibold text-text-secondary uppercase tracking-widest">Smart Business</p>
         </motion.div>
       </div>
 
@@ -134,14 +134,14 @@ export const Login = () => {
           animate={{ y: 0, opacity: 1 }}
           transition={{ duration: 0.5, delay: 0.15 }}
         >
-          <Card padding="lg" className="w-full shadow-lg border-gray-200 bg-white overflow-hidden">
+          <Card padding="lg" className="w-full shadow-lg bg-system-surface">
             
             {/* Tabs */}
-            <div className="flex bg-gray-100 rounded-lg p-1 mb-6">
+            <div className="flex bg-system-bg rounded-lg p-1 mb-6">
               <button
                 onClick={() => setActiveTab('manager')}
-                className={`flex-1 py-2.5 text-sm font-bold rounded-md flex justify-center items-center gap-2 transition-all ${
-                  activeTab === 'manager' ? 'bg-white text-primary shadow-sm' : 'text-gray-500 hover:text-gray-700'
+                className={`flex-1 py-2.5 text-subhead font-bold rounded-md flex justify-center items-center gap-2 transition-all ${
+                  activeTab === 'manager' ? 'bg-system-surface text-primary shadow-sm' : 'text-text-secondary hover:text-text-primary'
                 }`}
               >
                 <Shield className="h-4 w-4" /> Yönetici
@@ -149,7 +149,7 @@ export const Login = () => {
               <button
                 onClick={() => setActiveTab('employee')}
                 className={`flex-1 py-2.5 text-sm font-bold rounded-md flex justify-center items-center gap-2 transition-all ${
-                  activeTab === 'employee' ? 'bg-white text-primary shadow-sm' : 'text-gray-500 hover:text-gray-700'
+                  activeTab === 'employee' ? 'bg-system-surface text-primary shadow-sm' : 'text-text-secondary hover:text-text-secondary'
                 }`}
               >
                 <User className="h-4 w-4" /> Personel
@@ -165,8 +165,8 @@ export const Login = () => {
                   exit={{ opacity: 0, x: 20 }}
                   transition={{ duration: 0.2 }}
                 >
-                  <h2 className="text-xl font-bold text-gray-900">İşletme Sahibi Girişi</h2>
-                  <p className="mt-1 text-sm font-medium text-gray-500 mb-6">
+                  <h2 className="text-xl font-bold text-text-primary">İşletme Sahibi Girişi</h2>
+                  <p className="mt-1 text-sm font-medium text-text-secondary mb-6">
                     Yönetici hesabınızla giriş yapın
                   </p>
                   <div className="flex flex-col gap-3">
@@ -174,7 +174,7 @@ export const Login = () => {
                       type="button"
                       onClick={() => handleOAuthLogin('google')}
                       disabled={loading}
-                      className="flex items-center justify-center gap-3 w-full bg-white border border-gray-300 text-gray-700 rounded-md h-12 font-bold hover:bg-gray-50 transition-colors shadow-sm disabled:opacity-50"
+                      className="flex items-center justify-center gap-3 w-full bg-system-surface border border-gray-300 text-text-secondary rounded-md h-12 font-bold hover:bg-glass-highlight transition-colors shadow-sm disabled:opacity-50"
                     >
                       <img src="https://www.svgrepo.com/show/475656/google-color.svg" alt="Google" className="w-5 h-5" />
                       Google ile Giriş Yap
@@ -191,16 +191,16 @@ export const Login = () => {
                   exit={{ opacity: 0, x: -20 }}
                   transition={{ duration: 0.2 }}
                 >
-                  <h2 className="text-xl font-bold text-gray-900">Personel Girişi</h2>
-                  <p className="mt-1 text-sm font-medium text-gray-500 mb-6">
+                  <h2 className="text-xl font-bold text-text-primary">Personel Girişi</h2>
+                  <p className="mt-1 text-sm font-medium text-text-secondary mb-6">
                     Sadece rakamları kullanarak hızlıca girin
                   </p>
 
                   <form onSubmit={handleEmployeeLogin} className="flex flex-col gap-4">
                     <div className="flex flex-col gap-1">
-                      <label className="text-xs font-bold text-gray-500 uppercase ml-1">Telefon Numarası</label>
-                      <div className="flex items-center px-4 bg-white border-2 border-gray-200 rounded-xl focus-within:ring-2 focus-within:ring-primary focus-within:border-primary shadow-sm">
-                        <span className="text-gray-400 font-bold mr-2">+90</span>
+                      <label className="text-xs font-bold text-text-secondary uppercase ml-1">Telefon Numarası</label>
+                      <div className="flex items-center px-4 bg-system-surface border-2 border-system-border rounded-xl focus-within:ring-2 focus-within:ring-primary focus-within:border-primary shadow-sm">
+                        <span className="text-text-tertiary font-bold mr-2">+90</span>
                         <input
                           type="text"
                           inputMode="numeric"
@@ -209,15 +209,15 @@ export const Login = () => {
                           value={empPhone}
                           onChange={(e) => setEmpPhone(e.target.value.replace(/\D/g, ''))}
                           required
-                          className="h-14 flex-1 bg-transparent text-lg font-bold text-gray-900 outline-none placeholder:text-gray-300"
+                          className="h-14 flex-1 bg-transparent text-lg font-bold text-text-primary outline-none placeholder:text-system-border"
                         />
                       </div>
                     </div>
 
                     <div className="flex flex-col gap-1 mt-2">
-                      <label className="text-xs font-bold text-gray-500 uppercase ml-1">6 Hanelİ PIN Kodu</label>
-                      <div className="flex items-center px-4 bg-white border-2 border-gray-200 rounded-xl focus-within:ring-2 focus-within:ring-primary focus-within:border-primary shadow-sm">
-                        <KeyRound className="h-5 w-5 text-gray-400 mr-2" />
+                      <label className="text-xs font-bold text-text-secondary uppercase ml-1">6 Hanelİ PIN Kodu</label>
+                      <div className="flex items-center px-4 bg-system-surface border-2 border-system-border rounded-xl focus-within:ring-2 focus-within:ring-primary focus-within:border-primary shadow-sm">
+                        <KeyRound className="h-5 w-5 text-text-tertiary mr-2" />
                         <input
                           type={showPassword ? 'text' : 'password'}
                           inputMode="numeric"
@@ -227,12 +227,12 @@ export const Login = () => {
                           value={empPin}
                           onChange={(e) => setEmpPin(e.target.value.replace(/\D/g, ''))}
                           required
-                          className="h-14 flex-1 bg-transparent text-2xl tracking-[0.5em] font-bold text-gray-900 outline-none placeholder:text-gray-300 placeholder:tracking-normal"
+                          className="h-14 flex-1 bg-transparent text-2xl tracking-[0.5em] font-bold text-text-primary outline-none placeholder:text-system-border placeholder:tracking-normal"
                         />
                         <button
                           type="button"
                           onClick={() => setShowPassword(!showPassword)}
-                          className="ml-2 flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-md text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-600"
+                          className="ml-2 flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-md text-text-tertiary transition-colors hover:bg-gray-100 hover:text-text-secondary"
                         >
                           {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
                         </button>
