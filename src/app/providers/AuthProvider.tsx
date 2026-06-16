@@ -61,26 +61,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       }
     }
 
-    // Get initial supabase session and latest user data
-    supabase.auth.getSession().then(async ({ data: { session } }) => {
-      setSession(session);
-      if (session?.user) {
-        // Fetch the fresh user object from DB to ensure user_metadata is up-to-date
-        const { data: { user: freshUser } } = await supabase.auth.getUser();
-        const meta = freshUser?.user_metadata || session.user.user_metadata || (session.user as any).raw_user_meta_data || {};
-        setUser({ 
-          id: session.user.id, 
-          type: 'owner', 
-          email: session.user.email,
-          name: meta.name || meta.full_name || undefined
-        });
-      } else {
-        setUser(null);
-      }
-      setIsLoading(false);
-    });
-
-    // Listen for auth changes
+    // Listen for auth changes. onAuthStateChange automatically fires INITIAL_SESSION on mount.
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
       setSession(session);
       

@@ -95,7 +95,7 @@ export const TenantProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     };
 
     resolveTenant();
-  }, [user]);
+  }, [user?.id, user?.type, user?.tenant_id]);
 
   if (isLoading) {
     return (

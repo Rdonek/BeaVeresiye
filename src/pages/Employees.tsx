@@ -22,7 +22,7 @@ export const Employees = () => {
   
   const [newName, setNewName] = useState('');
   const [newPhone, setNewPhone] = useState('');
-  const [newPassword, setNewPassword] = useState('');
+  const [newPin, setNewPin] = useState('');
   
   const [perms, setPerms] = useState({
     pos: true,
@@ -35,7 +35,7 @@ export const Employees = () => {
     setEditingId(null);
     setNewName('');
     setNewPhone('');
-    setNewPassword('');
+    setNewPin('');
     setPerms({ pos: true, inventory: false, customers: true, dashboard: false });
     setIsModalOpen(true);
   };
@@ -44,13 +44,13 @@ export const Employees = () => {
     setEditingId(emp.id);
     setNewName(emp.name);
     setNewPhone(emp.phone);
-    setNewPassword(emp.password || '');
+    setNewPin(''); // Security: don't show existing pin, let them type a new one to change it
     setPerms(emp.permissions as any);
     setIsModalOpen(true);
   };
 
   const handleSaveEmployee = async () => {
-    if (!newName || !newPhone || (!newPassword && !editingId)) return;
+    if (!newName || !newPhone || (!newPin && !editingId)) return;
 
     let cleanPhone = newPhone.replace(/\D/g, '');
     if (cleanPhone.length === 11 && cleanPhone.startsWith('0')) cleanPhone = cleanPhone.substring(1);
@@ -59,6 +59,12 @@ export const Employees = () => {
       toast.error("Hata: Geçerli 10 haneli bir telefon numarası girin.");
       return;
     }
+    
+    if (newPin && newPin.length !== 6) {
+      toast.error("Hata: PIN kodu tam olarak 6 haneli olmalıdır.");
+      return;
+    }
+    
     const formattedPhone = `0${cleanPhone}`;
 
     const payload: any = {
@@ -68,8 +74,8 @@ export const Employees = () => {
       tenant_id: tenantId
     };
     
-    if (newPassword) {
-      payload.password = newPassword;
+    if (newPin) {
+      payload.pin_code = newPin;
     }
 
     try {
@@ -183,8 +189,15 @@ export const Employees = () => {
               <Input placeholder="0555..." type="tel" value={newPhone} onChange={e => setNewPhone(e.target.value)} />
             </div>
             <div>
-              <label className="ml-1 mb-2 block font-subhead text-text-secondary">Şifre</label>
-              <Input placeholder={editingId ? "Şifreyi Değiştir (İsteğe Bağlı)" : "Kasiyer Şifresi"} type="text" value={newPassword} onChange={e => setNewPassword(e.target.value)} />
+              <label className="ml-1 mb-2 block font-subhead text-text-secondary">6 Haneli PIN Kodu</label>
+              <Input 
+                placeholder={editingId ? "PIN'i Değiştir (İsteğe Bağlı)" : "145399"} 
+                type="text" 
+                inputMode="numeric"
+                maxLength={6}
+                value={newPin} 
+                onChange={e => setNewPin(e.target.value.replace(/\D/g, ''))} 
+              />
             </div>
           </div>
 
@@ -198,7 +211,7 @@ export const Employees = () => {
             </div>
           </div>
 
-          <Button fullWidth size="lg" className="mt-6" onClick={handleSaveEmployee} disabled={!newName || !newPhone || (!newPassword && !editingId)}>
+          <Button fullWidth size="lg" className="mt-6" onClick={handleSaveEmployee} disabled={!newName || !newPhone || (!newPin && !editingId)}>
             {editingId ? "Değişiklikleri Kaydet" : "Kaydet ve Yetki Ver"}
           </Button>
         </div>
