@@ -15,7 +15,7 @@ import { tr } from 'date-fns/locale';
 
 import * as XLSX from 'xlsx';
 import jsPDF from 'jspdf';
-import 'jspdf-autotable';
+import autoTable from 'jspdf-autotable';
 
 export const History = () => {
   const { tenantId, tenantName } = useTenant();
@@ -137,7 +137,7 @@ export const History = () => {
     const headers = [['Tarih', 'İşlem Tipi', 'Açıklama', 'Müşteri', 'Ödeme Yöntemi', 'Kasiyer', 'Tutar (TL)']];
     const data = exportData.map(row => Object.values(row));
 
-    (doc as any).autoTable({
+    autoTable(doc, {
       head: headers,
       body: data,
       startY: 70,
