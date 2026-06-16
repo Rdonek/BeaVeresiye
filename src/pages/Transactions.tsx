@@ -97,6 +97,7 @@ export const Transactions = () => {
   const handleAddTx = async (type: 'income' | 'expense') => {
     if (!tenantId || !user || !txAmount) return;
     
+    try {
       await addTransactionMutation.mutateAsync({
         tenant_id: tenantId,
         user_id: user.id,
