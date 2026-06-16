@@ -109,7 +109,19 @@ export const Inventory = () => {
 
   return (
     <div className="flex flex-col gap-6 w-full">
-      <Header title="Stok ve Envanter" subtitle="Ürünlerinizi ve stok durumunu yönetin." />
+      <Header 
+        title="Stok ve Envanter" 
+        subtitle="Ürünlerinizi yönetin" 
+        rightElement={
+          <button 
+            onClick={() => navigate('/pos')}
+            className="flex items-center text-xs font-bold bg-primary/10 text-primary px-3 py-1.5 rounded-full hover:bg-primary/20 transition-colors"
+          >
+            <Calculator className="w-3.5 h-3.5 mr-1.5" />
+            Hızlı Satış
+          </button>
+        }
+      />
 
       {/* Top Bar: Search & Action */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 -mt-2">
@@ -121,28 +133,18 @@ export const Inventory = () => {
             onChange={(e) => setSearch(e.target.value)}
           />
         </div>
-        <div className="grid grid-cols-2 md:flex md:flex-row gap-2 w-full md:w-auto">
-          <Button 
-            variant="outline" 
-            onClick={() => navigate('/pos')} 
-            className="w-full border-primary/20 text-primary hover:bg-primary/5 flex items-center justify-center"
-          >
-            <Calculator className="h-4 w-4 sm:mr-2 mr-1" />
-            <span className="hidden sm:inline">Hızlı Satış</span>
-            <span className="inline sm:hidden">POS</span>
-          </Button>
+        <div className="flex items-center gap-2 w-full md:w-auto">
           <Button 
             variant="secondary" 
             onClick={() => setIsImportOpen(true)} 
-            className="w-full border-gray-200 flex items-center justify-center"
+            className="flex-1 md:flex-none border-gray-200"
           >
-            <FileSpreadsheet className="h-4 w-4 sm:mr-2 mr-1 text-green-600" />
-            <span className="hidden sm:inline">İçe Aktar</span>
-            <span className="inline sm:hidden">Excel</span>
+            <FileSpreadsheet className="h-4 w-4 mr-2 text-green-600" />
+            İçe Aktar
           </Button>
-          <Button onClick={() => openModal()} className="col-span-2 md:col-span-1 w-full flex items-center justify-center">
+          <Button onClick={() => openModal()} className="flex-1 md:flex-none">
             <Plus className="h-4 w-4 mr-2" />
-            Yeni Ürün Ekle
+            Yeni Ürün
           </Button>
         </div>
       </div>
