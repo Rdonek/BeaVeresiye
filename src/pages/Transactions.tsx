@@ -199,43 +199,42 @@ export const Transactions = () => {
         subtitle="Tüm nakit giriş ve çıkışları"
       />
       
-      {/* Summary Cards */}
-      <div className="flex overflow-x-auto pb-2 -mx-4 px-4 md:mx-0 md:px-0 md:grid md:grid-cols-3 gap-4 snap-x scrollbar-hide">
-        <GlassCard className="min-w-[200px] flex-1 md:min-w-0 p-4 flex flex-col justify-between gap-3 border-l-4 border-l-success snap-start">
-          <div className="flex justify-between items-start">
-            <p className="text-xs font-bold text-gray-500 uppercase tracking-wider">Toplam Giriş</p>
-            <div className="h-8 w-8 rounded-full bg-success/10 text-success flex items-center justify-center flex-shrink-0">
-              <TrendingUp className="h-4 w-4" />
-            </div>
-          </div>
-          <p className="text-2xl lg:text-3xl font-extrabold text-gray-900 truncate" title={`${summary.totalIncome} ₺`}>
-            {summary.totalIncome.toLocaleString('tr-TR', { minimumFractionDigits: 2 })} <span className="text-lg lg:text-xl text-gray-500">₺</span>
+      {/* Hero Summary Card */}
+      <div className="bg-gradient-to-br from-gray-900 to-gray-800 rounded-3xl p-6 text-white shadow-xl -mt-2 relative overflow-hidden">
+        {/* Background decorations */}
+        <div className="absolute top-0 right-0 -mt-4 -mr-4 w-24 h-24 bg-white opacity-5 rounded-full blur-2xl"></div>
+        <div className="absolute bottom-0 left-0 -mb-4 -ml-4 w-24 h-24 bg-primary opacity-20 rounded-full blur-2xl"></div>
+        
+        <div className="relative z-10 flex flex-col items-center text-center mb-6">
+          <p className="text-gray-400 text-xs font-bold uppercase tracking-widest mb-1 flex items-center justify-center gap-1">
+            <Wallet className="w-3 h-3" /> Net Kasa Bakiye
           </p>
-        </GlassCard>
-
-        <GlassCard className="min-w-[200px] flex-1 md:min-w-0 p-4 flex flex-col justify-between gap-3 border-l-4 border-l-danger snap-start">
-          <div className="flex justify-between items-start">
-            <p className="text-xs font-bold text-gray-500 uppercase tracking-wider">Toplam Çıkış</p>
-            <div className="h-8 w-8 rounded-full bg-danger/10 text-danger flex items-center justify-center flex-shrink-0">
-              <TrendingDown className="h-4 w-4" />
+          <h2 className="text-4xl sm:text-5xl font-extrabold tracking-tight">
+            {summary.net.toLocaleString('tr-TR', { minimumFractionDigits: 2 })} <span className="text-2xl text-gray-400 font-medium">₺</span>
+          </h2>
+        </div>
+        
+        <div className="relative z-10 grid grid-cols-2 gap-4 border-t border-gray-700/50 pt-5">
+          <div className="flex flex-col items-center justify-center">
+            <div className="flex items-center gap-1 text-gray-400 mb-1">
+              <TrendingUp className="w-3 h-3 text-success" />
+              <p className="text-[10px] font-bold uppercase tracking-wider">Toplam Giriş</p>
             </div>
+            <p className="text-lg font-bold text-white">
+              +{summary.totalIncome.toLocaleString('tr-TR', { minimumFractionDigits: 2 })} ₺
+            </p>
           </div>
-          <p className="text-2xl lg:text-3xl font-extrabold text-gray-900 truncate" title={`${summary.totalExpense} ₺`}>
-            {summary.totalExpense.toLocaleString('tr-TR', { minimumFractionDigits: 2 })} <span className="text-lg lg:text-xl text-gray-500">₺</span>
-          </p>
-        </GlassCard>
-
-        <GlassCard className="min-w-[200px] flex-1 md:min-w-0 p-4 flex flex-col justify-between gap-3 border-l-4 border-l-primary bg-primary/[0.02] snap-start">
-          <div className="flex justify-between items-start">
-            <p className="text-xs font-bold text-primary uppercase tracking-wider">Net Kasa (Bakiye)</p>
-            <div className="h-8 w-8 rounded-full bg-primary/10 text-primary flex items-center justify-center flex-shrink-0">
-              <Wallet className="h-4 w-4" />
+          
+          <div className="flex flex-col items-center justify-center border-l border-gray-700/50">
+            <div className="flex items-center gap-1 text-gray-400 mb-1">
+              <TrendingDown className="w-3 h-3 text-danger" />
+              <p className="text-[10px] font-bold uppercase tracking-wider">Toplam Çıkış</p>
             </div>
+            <p className="text-lg font-bold text-white">
+              -{summary.totalExpense.toLocaleString('tr-TR', { minimumFractionDigits: 2 })} ₺
+            </p>
           </div>
-          <p className="text-2xl lg:text-3xl font-extrabold text-primary truncate" title={`${summary.net} ₺`}>
-            {summary.net.toLocaleString('tr-TR', { minimumFractionDigits: 2 })} <span className="text-lg lg:text-xl opacity-70">₺</span>
-          </p>
-        </GlassCard>
+        </div>
       </div>
 
       <div className="flex flex-col gap-4">
