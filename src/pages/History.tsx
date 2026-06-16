@@ -28,9 +28,13 @@ export const History = () => {
   const [search, setSearch] = useState('');
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
-  const [typeFilter, setTypeFilter] = useState<'all' | 'income' | 'expense' | 'sale'>('all');
-  const [paymentFilter, setPaymentFilter] = useState<'all' | 'cash' | 'credit_card' | 'veresiye'>('all');
-  const [statusFilter, setStatusFilter] = useState<'active' | 'cancelled' | 'all'>('active');
+  const [typeFilters, setTypeFilters] = useState<string[]>(['sale', 'income', 'expense']);
+  const [paymentFilters, setPaymentFilters] = useState<string[]>(['cash', 'credit_card', 'veresiye']);
+  const [statusFilters, setStatusFilters] = useState<string[]>(['active']);
+
+  const toggleFilter = (setFn: React.Dispatch<React.SetStateAction<string[]>>, val: string) => {
+    setFn(prev => prev.includes(val) ? prev.filter(p => p !== val) : [...prev, val]);
+  };
   const [isFilterOpen, setIsFilterOpen] = useState(false);
 
   const [selectedTx, setSelectedTx] = useState<any>(null);
@@ -54,14 +58,14 @@ export const History = () => {
       
       // Status Filter
       const isTxCancelled = tx.payment_method === 'cancelled' || tx.description?.startsWith('[İPTAL');
-      if (statusFilter === 'active' && isTxCancelled) return false;
-      if (statusFilter === 'cancelled' && !isTxCancelled) return false;
+      const txStatus = isTxCancelled ? 'cancelled' : 'active';
+      if (!statusFilters.includes(txStatus)) return false;
 
       // Type Filter
-      if (typeFilter !== 'all' && tx.type !== typeFilter) return false;
+      if (!typeFilters.includes(tx.type)) return false;
       
       // Payment Filter
-      if (paymentFilter !== 'all' && tx.payment_method !== paymentFilter) return false;
+      if (!isTxCancelled && !paymentFilters.includes(tx.payment_method)) return false;
 
       // Search Filter
       if (search) {
@@ -74,7 +78,7 @@ export const History = () => {
 
       return true;
     });
-  }, [transactions, startDate, endDate, typeFilter, paymentFilter, statusFilter, search, customers]);
+  }, [transactions, startDate, endDate, typeFilters, paymentFilters, statusFilters, search, customers]);
 
   const getTypeIcon = (type: string) => {
     if (type === 'sale') return <ShoppingBag className="h-5 w-5 text-primary" />;
@@ -253,52 +257,118 @@ export const History = () => {
               exit={{ height: 0, opacity: 0 }}
               className="overflow-hidden"
             >
-              <GlassCard className="p-5 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
-                <div>
-                  <label className="text-[11px] font-bold text-gray-500 uppercase mb-1.5 block tracking-wider">Başlangıç Tarihi</label>
-                  <Input type="date" value={startDate} onChange={e => setStartDate(e.target.value)} />
-                </div>
-                <div>
-                  <label className="text-[11px] font-bold text-gray-500 uppercase mb-1.5 block tracking-wider">Bitiş Tarihi</label>
-                  <Input type="date" value={endDate} onChange={e => setEndDate(e.target.value)} />
-                </div>
-                <div>
-                  <label className="text-[11px] font-bold text-gray-500 uppercase mb-1.5 block tracking-wider">İşlem Tipi</label>
-                  <select 
-                    value={typeFilter}
-                    onChange={(e) => setTypeFilter(e.target.value as any)}
-                    className="w-full h-[42px] px-3 bg-white border border-gray-200 rounded-xl focus:border-primary focus:ring-1 focus:ring-primary outline-none text-sm font-semibold text-gray-700 transition-all shadow-sm"
-                  >
-                    <option value="all">Tüm İşlemler</option>
-                    <option value="sale">Satışlar</option>
-                    <option value="income">Tahsilat / Gelir</option>
-                    <option value="expense">Masraf / Gider</option>
-                  </select>
-                </div>
-                <div>
-                  <label className="text-[11px] font-bold text-gray-500 uppercase mb-1.5 block tracking-wider">Ödeme Yöntemi</label>
-                  <select 
-                    value={paymentFilter}
-                    onChange={(e) => setPaymentFilter(e.target.value as any)}
-                    className="w-full h-[42px] px-3 bg-white border border-gray-200 rounded-xl focus:border-primary focus:ring-1 focus:ring-primary outline-none text-sm font-semibold text-gray-700 transition-all shadow-sm"
-                  >
-                    <option value="all">Tüm Yöntemler</option>
-                    <option value="cash">Nakit</option>
-                    <option value="credit_card">Kredi Kartı</option>
-                    <option value="veresiye">Veresiye</option>
-                  </select>
-                </div>
-                <div>
-                  <label className="text-[11px] font-bold text-gray-500 uppercase mb-1.5 block tracking-wider">Durum</label>
-                  <select 
-                    value={statusFilter}
-                    onChange={(e) => setStatusFilter(e.target.value as any)}
-                    className="w-full h-[42px] px-3 bg-white border border-gray-200 rounded-xl focus:border-primary focus:ring-1 focus:ring-primary outline-none text-sm font-semibold text-gray-700 transition-all shadow-sm"
-                  >
-                    <option value="active">Aktif İşlemler</option>
-                    <option value="cancelled">İptal Edilenler</option>
-                    <option value="all">Tümü (Hepsi)</option>
-                  </select>
+              <GlassCard className="p-6">
+                <div className="flex flex-col gap-8">
+                  {/* Tarih Seçimi */}
+                  <div>
+                    <h4 className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-3">Tarih Aralığı</h4>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      <Input 
+                        type="text" 
+                        placeholder="Başlangıç Tarihi" 
+                        onFocus={(e) => { e.target.type = 'date'; }}
+                        onBlur={(e) => { if (!e.target.value) e.target.type = 'text'; }}
+                        value={startDate} 
+                        onChange={e => setStartDate(e.target.value)} 
+                        className="bg-gray-50/50"
+                      />
+                      <Input 
+                        type="text" 
+                        placeholder="Bitiş Tarihi" 
+                        onFocus={(e) => { e.target.type = 'date'; }}
+                        onBlur={(e) => { if (!e.target.value) e.target.type = 'text'; }}
+                        value={endDate} 
+                        onChange={e => setEndDate(e.target.value)} 
+                        className="bg-gray-50/50"
+                      />
+                    </div>
+                  </div>
+
+                  {/* İşlem Tipi */}
+                  <div>
+                    <h4 className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-3">İşlem Tipi</h4>
+                    <div className="flex flex-wrap gap-2">
+                      {[
+                        { value: 'sale', label: 'Satışlar' },
+                        { value: 'income', label: 'Tahsilat / Gelir' },
+                        { value: 'expense', label: 'Masraf / Gider' }
+                      ].map(opt => (
+                        <button
+                          key={opt.value}
+                          onClick={() => toggleFilter(setTypeFilters, opt.value)}
+                          className={`px-4 py-2 rounded-xl text-sm font-bold transition-all border ${
+                            typeFilters.includes(opt.value)
+                              ? 'bg-primary border-primary text-white shadow-md shadow-primary/20'
+                              : 'bg-white border-gray-200 text-gray-600 hover:border-gray-300 hover:bg-gray-50'
+                          }`}
+                        >
+                          {opt.label}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Ödeme Yöntemi */}
+                  <div>
+                    <h4 className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-3">Ödeme Yöntemi</h4>
+                    <div className="flex flex-wrap gap-2">
+                      {[
+                        { value: 'cash', label: 'Nakit' },
+                        { value: 'credit_card', label: 'Kredi Kartı' },
+                        { value: 'veresiye', label: 'Veresiye (Açık Hesap)' }
+                      ].map(opt => (
+                        <button
+                          key={opt.value}
+                          onClick={() => toggleFilter(setPaymentFilters, opt.value)}
+                          className={`px-4 py-2 rounded-xl text-sm font-bold transition-all border ${
+                            paymentFilters.includes(opt.value)
+                              ? 'bg-primary border-primary text-white shadow-md shadow-primary/20'
+                              : 'bg-white border-gray-200 text-gray-600 hover:border-gray-300 hover:bg-gray-50'
+                          }`}
+                        >
+                          {opt.label}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Durum */}
+                  <div>
+                    <div className="flex items-center justify-between mb-3">
+                      <h4 className="text-xs font-bold text-gray-400 uppercase tracking-wider">Durum</h4>
+                      <button 
+                        onClick={() => {
+                          setTypeFilters(['sale', 'income', 'expense']);
+                          setPaymentFilters(['cash', 'credit_card', 'veresiye']);
+                          setStatusFilters(['active']);
+                          setStartDate('');
+                          setEndDate('');
+                          setSearch('');
+                        }}
+                        className="text-xs font-bold text-primary hover:text-primary/80 transition-colors"
+                      >
+                        Filtreleri Sıfırla
+                      </button>
+                    </div>
+                    <div className="flex flex-wrap gap-2">
+                      {[
+                        { value: 'active', label: 'Aktif İşlemler' },
+                        { value: 'cancelled', label: 'İptal Edilenler' }
+                      ].map(opt => (
+                        <button
+                          key={opt.value}
+                          onClick={() => toggleFilter(setStatusFilters, opt.value)}
+                          className={`px-4 py-2 rounded-xl text-sm font-bold transition-all border ${
+                            statusFilters.includes(opt.value)
+                              ? 'bg-primary border-primary text-white shadow-md shadow-primary/20'
+                              : 'bg-white border-gray-200 text-gray-600 hover:border-gray-300 hover:bg-gray-50'
+                          }`}
+                        >
+                          {opt.label}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
                 </div>
               </GlassCard>
             </motion.div>
