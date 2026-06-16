@@ -124,6 +124,8 @@ export const Pos = () => {
 
     setIsCheckingOut(true);
     try {
+      const description = lines.map(l => `${l.quantity} ${l.name}`).join(', ');
+
       const { data, error } = await supabase.rpc('process_pos_sale', {
         p_tenant_id: tenantId,
         p_user_id: user.id,
@@ -131,6 +133,7 @@ export const Pos = () => {
         p_payment_method: paymentMethod,
         p_grand_total: grandTotal,
         p_cashier_name: user?.type === 'employee' ? user?.name : 'Patron',
+        p_description: description,
         p_lines: lines.map(line => ({
           product_id: line.product_id,
           quantity: line.quantity,
