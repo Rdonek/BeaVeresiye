@@ -26,8 +26,6 @@ export const History = () => {
   const updateBalanceMutation = useUpdateEntityBalance();
 
   const [search, setSearch] = useState('');
-  const [startDate, setStartDate] = useState('');
-  const [endDate, setEndDate] = useState('');
   const [typeFilters, setTypeFilters] = useState<string[]>(['sale', 'income', 'expense']);
   const [paymentFilters, setPaymentFilters] = useState<string[]>(['cash', 'credit_card', 'veresiye']);
   const [statusFilters, setStatusFilters] = useState<string[]>(['active']);
@@ -48,14 +46,6 @@ export const History = () => {
 
   const filteredTransactions = useMemo(() => {
     return transactions.filter(tx => {
-      // Date Filter
-      if (startDate && new Date(tx.created_at || '') < new Date(startDate)) return false;
-      if (endDate) {
-        const end = new Date(endDate);
-        end.setHours(23, 59, 59, 999);
-        if (new Date(tx.created_at || '') > end) return false;
-      }
-      
       // Status Filter
       const isTxCancelled = tx.payment_method === 'cancelled' || tx.description?.startsWith('[İPTAL');
       const txStatus = isTxCancelled ? 'cancelled' : 'active';
@@ -78,7 +68,7 @@ export const History = () => {
 
       return true;
     });
-  }, [transactions, startDate, endDate, typeFilters, paymentFilters, statusFilters, search, customers]);
+  }, [transactions, typeFilters, paymentFilters, statusFilters, search, customers]);
 
   const getTypeIcon = (type: string) => {
     if (type === 'sale') return <ShoppingBag className="h-5 w-5 text-primary" />;
@@ -259,31 +249,6 @@ export const History = () => {
             >
               <GlassCard className="p-6">
                 <div className="flex flex-col gap-8">
-                  {/* Tarih Seçimi */}
-                  <div>
-                    <h4 className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-3">Tarih Aralığı</h4>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                      <Input 
-                        type="text" 
-                        placeholder="Başlangıç Tarihi" 
-                        onFocus={(e) => { e.target.type = 'date'; }}
-                        onBlur={(e) => { if (!e.target.value) e.target.type = 'text'; }}
-                        value={startDate} 
-                        onChange={e => setStartDate(e.target.value)} 
-                        className="bg-gray-50/50"
-                      />
-                      <Input 
-                        type="text" 
-                        placeholder="Bitiş Tarihi" 
-                        onFocus={(e) => { e.target.type = 'date'; }}
-                        onBlur={(e) => { if (!e.target.value) e.target.type = 'text'; }}
-                        value={endDate} 
-                        onChange={e => setEndDate(e.target.value)} 
-                        className="bg-gray-50/50"
-                      />
-                    </div>
-                  </div>
-
                   {/* İşlem Tipi */}
                   <div>
                     <h4 className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-3">İşlem Tipi</h4>
@@ -341,8 +306,6 @@ export const History = () => {
                           setTypeFilters(['sale', 'income', 'expense']);
                           setPaymentFilters(['cash', 'credit_card', 'veresiye']);
                           setStatusFilters(['active']);
-                          setStartDate('');
-                          setEndDate('');
                           setSearch('');
                         }}
                         className="text-xs font-bold text-primary hover:text-primary/80 transition-colors"
