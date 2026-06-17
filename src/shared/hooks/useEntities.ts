@@ -5,12 +5,16 @@ import type { Database } from '../api/database.types';
 export type Entity = Database['public']['Tables']['customers']['Row'];
 export type EntityInsert = Database['public']['Tables']['customers']['Insert'];
 
-export const useEntities = (tenantId: string | null, type: 'customer' | 'supplier' = 'customer') => {
+export const useEntities = (tenantId: string | null, type: 'customer' | 'supplier' | 'all' = 'customer') => {
   return useQuery({
     queryKey: ['customers', tenantId, type],
     queryFn: async () => {
       if (!tenantId) return [];
-      const { data, error } = await supabase.from('customers').select('*').eq('tenant_id', tenantId).eq('type', type).order('name', { ascending: true });
+      let query = supabase.from('customers').select('*').eq('tenant_id', tenantId).order('name', { ascending: true });
+      if (type !== 'all') {
+        query = query.eq('type', type);
+      }
+      const { data, error } = await query;
       if (error) throw error;
       return data as Entity[];
     },

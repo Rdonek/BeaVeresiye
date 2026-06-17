@@ -18,8 +18,7 @@ import { Onboarding } from '@/pages/Onboarding';
 import { Dashboard } from '@/pages/Dashboard';
 import { Pos } from '@/pages/Pos';
 import { Inventory } from '@/pages/Inventory';
-import { Customers } from '@/pages/Customers';
-import { Suppliers } from '@/pages/Suppliers';
+import { Contacts } from '@/pages/Contacts';
 import { Settings } from '@/pages/Settings';
 import { Employees } from '@/pages/Employees';
 import { Transactions } from '@/pages/Transactions';
@@ -81,12 +80,8 @@ export const router = createBrowserRouter([
             element: <PermissionGuard permission="inventory"><Inventory /></PermissionGuard>
           },
           {
-            path: 'customers',
-            element: <PermissionGuard permission="customers"><Customers /></PermissionGuard>
-          },
-          {
-            path: 'suppliers',
-            element: <PermissionGuard permission="customers"><Suppliers /></PermissionGuard>
+            path: 'contacts',
+            element: <PermissionGuard permission="customers"><Contacts /></PermissionGuard>
           },
           {
             path: 'settings',

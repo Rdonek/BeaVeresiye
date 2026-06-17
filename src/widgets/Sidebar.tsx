@@ -18,8 +18,7 @@ export const Sidebar = () => {
     { to: '/history', icon: List, label: 'İşlem Geçmişi', requiredPerm: 'dashboard' as const },
     { to: '/pos', icon: Calculator, label: 'Hızlı Satış', requiredPerm: 'pos' as const },
     { to: '/inventory', icon: PackageSearch, label: 'Stok Yönetimi', requiredPerm: 'inventory' as const },
-    { to: '/customers', icon: Users, label: 'Veresiye Defteri', requiredPerm: 'customers' as const },
-    { to: '/suppliers', icon: Truck, label: 'Toptancılar', requiredPerm: 'customers' as const },
+    { to: '/contacts', icon: Users, label: 'Defter', requiredPerm: 'customers' as const },
     { to: '/settings', icon: SettingsIcon, label: 'Ayarlar', requiredPerm: null },
   ];
 

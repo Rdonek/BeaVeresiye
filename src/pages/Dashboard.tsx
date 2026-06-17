@@ -19,6 +19,7 @@ export const Dashboard = () => {
   const [stats, setStats] = useState({
     dailySales: 0,
     customerDebt: 0,
+    supplierDebt: 0,
     lowStockItems: 0
   });
   const [recentTxs, setRecentTxs] = useState<any[]>([]);
@@ -46,13 +47,14 @@ export const Dashboard = () => {
 
       const dailySales = salesData?.reduce((sum, tx) => sum + Number(tx.amount), 0) || 0;
 
-      const { data: customersData } = await supabase
+      const { data: allEntitiesData } = await supabase
         .from('customers')
         .select('balance')
         .eq('tenant_id', tenantId)
-        .gt('balance', 0);
+        .neq('balance', 0);
 
-      const customerDebt = customersData?.reduce((sum, c) => sum + Number(c.balance), 0) || 0;
+      const customerDebt = allEntitiesData?.filter(e => Number(e.balance) > 0).reduce((sum, c) => sum + Number(c.balance), 0) || 0;
+      const supplierDebt = allEntitiesData?.filter(e => Number(e.balance) < 0).reduce((sum, c) => sum + Math.abs(Number(c.balance)), 0) || 0;
 
       const { count: lowStockCount } = await supabase
         .from('products')
@@ -73,6 +75,7 @@ export const Dashboard = () => {
       setStats({
         dailySales,
         customerDebt,
+        supplierDebt,
         lowStockItems: lowStockCount || 0
       });
     } catch (error) {
@@ -102,11 +105,17 @@ export const Dashboard = () => {
             value={loading ? "..." : stats.dailySales.toLocaleString('tr-TR', { minimumFractionDigits: 2 })} 
             unit="TL" 
           />
-          <HeroCard.Grid>
+          <div className="grid grid-cols-3 gap-3 lg:gap-4 border-t border-hero-border/80 pt-4">
             <HeroCard.Stat 
               title="Piyasadaki Alacak" 
               value={loading ? "..." : stats.customerDebt.toLocaleString('tr-TR')} 
               unit="TL" 
+            />
+            <HeroCard.Stat 
+              title="Piyasaya Borç" 
+              value={loading ? "..." : stats.supplierDebt.toLocaleString('tr-TR')} 
+              unit="TL" 
+              isRight={true}
             />
             <HeroCard.Stat 
               title="Azalan Stok" 
@@ -115,7 +124,7 @@ export const Dashboard = () => {
               isRight={true}
               indicator={stats.lowStockItems > 0 && <span className="w-2 h-2 rounded-full bg-danger shadow-sm animate-pulse ml-1"></span>}
             />
-          </HeroCard.Grid>
+          </div>
         </HeroCard>
 
         {/* Quick Actions Grid */}

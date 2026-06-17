@@ -19,11 +19,11 @@ import { FilterChip } from '@/shared/ui/FilterChip';
 import { GlassCard as Card } from '@/shared/ui/GlassCard';
 import { useSettings } from '@/shared/hooks/useSettings';
 
-export const Customers = () => {
+export const Contacts = () => {
   const { tenantId, tenantName } = useTenant();
   const { user } = useAuth();
   
-  const { data: customers = [], isLoading: loading } = useEntities(tenantId);
+  const { data: customers = [], isLoading: loading } = useEntities(tenantId, 'all');
   const { settings, updateSettings } = useSettings(tenantId);
   const addCustomerMutation = useAddEntity();
   const updateCustomerMutation = useUpdateEntity();
@@ -48,7 +48,7 @@ export const Customers = () => {
   
   const [isTxModalOpen, setIsTxModalOpen] = useState(false);
   const [editingTx, setEditingTx] = useState<Transaction | null>(null);
-  const [txActionType, setTxActionType] = useState<'add_debt' | 'collect_payment'>('add_debt');
+  const [txActionType, setTxActionType] = useState<'add_debt' | 'add_credit'>('add_debt');
   const [txAmount, setTxAmount] = useState('');
   const [txDesc, setTxDesc] = useState('');
   const [txDueDate, setTxDueDate] = useState('');
@@ -88,7 +88,7 @@ export const Customers = () => {
     return `https://wa.me/?text=${encodeURIComponent(text)}`;
   };
 
-  const openTxModal = (type: 'add_debt' | 'collect_payment', tx?: Transaction) => {
+  const openTxModal = (type: 'add_debt' | 'add_credit', tx?: Transaction) => {
     setTxActionType(type);
     if (tx) {
       setEditingTx(tx);
@@ -122,7 +122,7 @@ export const Customers = () => {
         setSelectedCustomer(prev => prev ? { ...prev, name: newName, phone: newPhone || null } : null);
         setEditingCustomer(null);
         setIsAddOpen(false);
-        toast.success('Müşteri güncellendi.');
+        toast.success('Kayıt güncellendi.');
       } catch (err) {
         toast.error('Güncellenirken hata oluştu.');
       }
@@ -181,9 +181,9 @@ export const Customers = () => {
       try {
         await deleteCustomerMutation.mutateAsync({ id: selectedCustomer.id, tenantId });
         setSelectedCustomer(null);
-        toast.success('Müşteri başarıyla silindi.');
+        toast.success('Kayıt başarıyla silindi.');
       } catch (err) {
-        toast.error('Müşteri silinirken hata oluştu. (Geçmiş işlemleri olabilir)');
+        toast.error('Kayıt silinirken hata oluştu. (Geçmiş işlemleri olabilir)');
       }
     }
   };
@@ -238,7 +238,7 @@ export const Customers = () => {
       return;
     }
 
-    if (txActionType === 'collect_payment') {
+    if (txActionType === 'add_credit') {
       const currentBalance = selectedCustomer.balance ?? 0;
       if (currentBalance <= 0) {
         toast.error('Bu müşterinin tahsil edilecek borcu bulunmuyor.');
@@ -251,7 +251,14 @@ export const Customers = () => {
     }
     
     let dbType: 'income' | 'expense' = 'income';
-    let balanceChange = txActionType === 'add_debt' ? amountNum : -amountNum;
+    let balanceChange = 0;
+    if (txActionType === 'add_debt') {
+      balanceChange = amountNum;
+      dbType = txPaymentMethod === 'veresiye' ? 'income' : 'expense';
+    } else {
+      balanceChange = -amountNum;
+      dbType = txPaymentMethod === 'veresiye' ? 'expense' : 'income';
+    }
 
     try {
       if (editingTx) {
@@ -272,8 +279,8 @@ export const Customers = () => {
           tenant_id: tenantId,
           customer_id: selectedCustomer.id,
           amount: amountNum,
-          description: txDesc || (txActionType === 'add_debt' ? 'Manuel Borç Ekleme' : 'Tahsilat'),
-          payment_method: txActionType === 'collect_payment' ? txPaymentMethod : 'veresiye',
+          description: txDesc || (txActionType === 'add_debt' ? 'Manuel Borçlandırme' : 'Tahsilat'),
+          payment_method: txActionType === 'add_credit' ? txPaymentMethod : 'veresiye',
         };
         
         if (txDate) {
@@ -299,8 +306,8 @@ export const Customers = () => {
           cashier_name: user.name || user.email?.split('@')[0] || 'Patron',
           type: dbType,
           amount: amountNum,
-          description: txDesc || (txActionType === 'add_debt' ? 'Manuel Borç Ekleme' : 'Tahsilat'),
-          payment_method: txActionType === 'collect_payment' ? txPaymentMethod : 'veresiye',
+          description: txDesc || (txActionType === 'add_debt' ? 'Manuel Borçlandırme' : 'Tahsilat'),
+          payment_method: txActionType === 'add_credit' ? txPaymentMethod : 'veresiye',
         };
         
         if (networkLink?.status === 'active') {
@@ -448,7 +455,7 @@ export const Customers = () => {
               icon={Users}
               title={search ? 'Sonuç bulunamadı' : 'Henüz müşteri yok'}
               description={search ? 'Arama kriterlerinize uyan bir müşteri bulunamadı.' : 'Sisteme henüz hiç müşteri (cari) eklemediniz. Hemen yeni bir müşteri ekleyerek satışlara başlayın.'}
-              actionLabel={search ? undefined : 'Yeni Müşteri Ekle'}
+              actionLabel={search ? undefined : 'Yeni Kayıt Ekle Ekle'}
               actionIcon={Plus}
               onAction={search ? undefined : () => { setIsAddOpen(true); }}
             />
@@ -482,7 +489,7 @@ export const Customers = () => {
                   </div>
                   
                   <div className="flex items-center gap-4">
-                    <span className={`text-headline sm:text-title-3 font-bold ${(customer.balance ?? 0) > 0 ? 'text-danger' : 'text-text-primary'}`}>
+                    <span className={`text-headline sm:text-title-3 font-bold ${(customer.balance ?? 0) > 0 ? 'text-success' : (customer.balance ?? 0) < 0 ? 'text-danger' : 'text-text-primary'}`}>
                       {(customer.balance ?? 0).toLocaleString('tr-TR', { minimumFractionDigits: 2 })} ₺
                     </span>
                     <ChevronRight className="w-5 h-5 text-text-tertiary opacity-0 group-hover:opacity-100 transition-opacity" />
@@ -494,11 +501,11 @@ export const Customers = () => {
         )}
       </DataList>
 
-      <BottomSheet isOpen={isAddOpen} onClose={() => { setIsAddOpen(false); setEditingCustomer(null); }} title={editingCustomer ? "Müşteriyi Düzenle" : "Yeni Müşteri Ekle"}>
+      <BottomSheet isOpen={isAddOpen} onClose={() => { setIsAddOpen(false); setEditingCustomer(null); }} title={editingCustomer ? "Müşteriyi Düzenle" : "Yeni Kayıt Ekle Ekle"}>
         <div className="space-y-4 pt-4 pb-8">
           <div>
             <label className="block text-subhead font-medium text-text-secondary mb-1">Ad Soyad</label>
-            <Input placeholder="Müşteri Adı" value={newName} onChange={e => setNewName(e.target.value)} />
+            <Input placeholder="Kişi/Kurum Adı" value={newName} onChange={e => setNewName(e.target.value)} />
           </div>
           <div>
             <label className="block text-subhead font-medium text-text-secondary mb-1">Telefon (İsteğe Bağlı)</label>
@@ -636,13 +643,13 @@ export const Customers = () => {
                     variant="danger"
                     className="flex-1 shadow-lg shadow-danger/20 py-2 sm:py-3 h-auto text-sm sm:text-base font-bold"
                   >
-                    <ArrowUpRight className="h-4 w-4 sm:h-5 sm:w-5 mr-1.5"/> Borç Yaz
+                    <ArrowUpRight className="h-4 w-4 sm:h-5 sm:w-5 mr-1.5"/> VERDİM (+)
                   </Button>
                   <Button 
-                    onClick={() => openTxModal('collect_payment')}
+                    onClick={() => openTxModal('add_credit')}
                     className="flex-1 bg-success hover:bg-success-hover border-success text-white shadow-lg shadow-success/20 py-2 sm:py-3 h-auto text-sm sm:text-base font-bold"
                   >
-                    <ArrowDownRight className="h-4 w-4 sm:h-5 sm:w-5 mr-1.5"/> Tahsilat Al
+                    <ArrowDownRight className="h-4 w-4 sm:h-5 sm:w-5 mr-1.5"/> ALDIM (-)
                   </Button>
                 </div>
               </div>
@@ -680,7 +687,15 @@ export const Customers = () => {
                   ) : (
                     <div className="relative before:absolute before:inset-y-0 before:left-[23px] before:w-[2px] before:bg-gray-200/60 pb-8 space-y-4">
                       {ledgerTxs.map(tx => {
-                        const isDebt = tx.payment_method === 'veresiye' || tx.description?.includes('Borç') || tx.description?.includes('Açılış');
+                        const isCustomerTx = tx.type === 'income';
+                        const isOldDebtAdded = tx.payment_method === 'veresiye' || tx.description?.includes('Borç') || tx.description?.includes('Açılış');
+                        let impact = 0;
+                        if (isCustomerTx) {
+                          impact = isOldDebtAdded ? tx.amount : -tx.amount;
+                        } else {
+                          impact = isOldDebtAdded ? -tx.amount : tx.amount;
+                        }
+                        const isIncrease = impact > 0;
                         const isExternal = tx.network_source_tenant_id && tx.network_source_tenant_id !== tenantId;
                         const isMySyncedTx = tx.network_link_id && tx.network_source_tenant_id === tenantId;
                         
@@ -688,17 +703,17 @@ export const Customers = () => {
                           <div 
                             key={tx.id} 
                             className="relative pl-14 cursor-pointer group"
-                            onClick={() => openTxModal(isDebt ? 'add_debt' : 'collect_payment', tx)}
+                            onClick={() => openTxModal(isIncrease ? 'add_debt' : 'add_credit', tx)}
                           >
-                            <div className={`absolute left-2 top-3 w-8 h-8 rounded-full border-4 border-gray-50 flex items-center justify-center z-10 transition-transform group-hover:scale-110 ${isDebt ? 'bg-red-500 text-white shadow-sm shadow-red-200' : 'bg-green-500 text-white shadow-sm shadow-green-200'}`}>
-                              {isDebt ? <ArrowUpRight className="h-4 w-4" /> : <ArrowDownRight className="h-4 w-4" />}
+                            <div className={`absolute left-2 top-3 w-8 h-8 rounded-full border-4 border-gray-50 flex items-center justify-center z-10 transition-transform group-hover:scale-110 ${isIncrease ? 'bg-red-500 text-white shadow-sm shadow-red-200' : 'bg-green-500 text-white shadow-sm shadow-green-200'}`}>
+                              {isIncrease ? <ArrowUpRight className="h-4 w-4" /> : <ArrowDownRight className="h-4 w-4" />}
                             </div>
                             
                             <div className={`${isExternal ? 'bg-blue-50/60 border-blue-100' : 'bg-system-surface border-system-border'} p-4 rounded-2xl border shadow-sm group-hover:border-primary/40 group-hover:shadow-md transition-all flex justify-between items-center relative overflow-hidden`}>
                               <div className="relative z-10">
                                 <div className="flex items-center gap-2 mb-0.5">
                                   <p className="text-[15px] font-bold text-text-primary">
-                                    {isDebt ? 'Borç Eklendi' : 'Tahsilat Alındı'}
+                                    {isIncrease ? 'VERİLDİ (+)' : 'ALINDI (-)'}
                                   </p>
                                   {isExternal && <span className="px-1.5 py-0.5 text-[10px] font-bold bg-blue-100 text-blue-700 rounded-md">DIŞ AĞ</span>}
                                 </div>
@@ -717,8 +732,8 @@ export const Customers = () => {
                                 </div>
                               </div>
                               <div className="text-right relative z-10">
-                                <p className={`text-lg font-black tracking-tight ${isDebt ? 'text-red-600' : 'text-green-600'}`}>
-                                  {isDebt ? '+' : '-'}{tx.amount.toLocaleString('tr-TR')} <span className="text-sm">₺</span>
+                                <p className={`text-lg font-black tracking-tight ${isIncrease ? 'text-red-600' : 'text-green-600'}`}>
+                                  {isIncrease ? '+' : '-'}{tx.amount.toLocaleString('tr-TR')} <span className="text-sm">₺</span>
                                 </p>
                                 <div className="mt-1 inline-flex items-center px-2 py-0.5 rounded-md bg-system-surface border border-system-border shadow-sm text-[10px] font-bold text-text-secondary uppercase tracking-wider">
                                   {tx.payment_method === 'cash' ? 'Nakit' : tx.payment_method === 'credit_card' ? 'Kart' : tx.payment_method === 'veresiye' ? 'Açık Hesap' : 'Havale'}
@@ -726,7 +741,7 @@ export const Customers = () => {
                               </div>
                               
                               {/* Soft background glow based on type */}
-                              <div className={`absolute -right-4 -bottom-4 w-16 h-16 rounded-full blur-2xl opacity-20 ${isDebt ? 'bg-red-500' : 'bg-green-500'}`} />
+                              <div className={`absolute -right-4 -bottom-4 w-16 h-16 rounded-full blur-2xl opacity-20 ${isIncrease ? 'bg-red-500' : 'bg-green-500'}`} />
                             </div>
                           </div>
                         );
@@ -740,7 +755,7 @@ export const Customers = () => {
         )}
       </AnimatePresence>
 
-      <BottomSheet isOpen={isTxModalOpen} onClose={() => setIsTxModalOpen(false)} title={txActionType === 'add_debt' ? 'Manuel Borç Ekle' : 'Tahsilat Al'}>
+      <BottomSheet isOpen={isTxModalOpen} onClose={() => setIsTxModalOpen(false)} title={txActionType === 'add_debt' ? 'Manuel Borçlandır' : 'ALDIM (-)'}>
         <div className="space-y-4 pt-4 pb-8">
           <div>
             <label className="block text-subhead font-medium text-text-secondary mb-1">Tutar (₺)</label>
@@ -752,7 +767,7 @@ export const Customers = () => {
             <Input placeholder={txActionType === 'add_debt' ? 'Örn: 2 koli yumurta' : 'Örn: Elden nakit alındı'} value={txDesc} onChange={e => setTxDesc(e.target.value)} />
           </div>
 
-          {txActionType === 'collect_payment' && (
+          {txActionType === 'add_credit' && (
             <div>
               <label className="block text-subhead font-medium text-text-secondary mb-1">Ödeme Yöntemi</label>
               <div className="flex gap-2">
