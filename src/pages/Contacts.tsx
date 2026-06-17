@@ -633,13 +633,13 @@ export const Contacts = () => {
                     variant="danger"
                     className="flex-1 shadow-lg shadow-danger/20 py-2 sm:py-3 h-auto text-sm sm:text-base font-bold"
                   >
-                    <ArrowUpRight className="h-4 w-4 sm:h-5 sm:w-5 mr-1.5"/> VERDİM (+)
+                    <ArrowUpRight className="h-4 w-4 sm:h-5 sm:w-5 mr-1.5"/> Hesaba Ekle (+)
                   </Button>
                   <Button 
                     onClick={() => openTxModal('add_credit')}
                     className="flex-1 bg-success hover:bg-success-hover border-success text-white shadow-lg shadow-success/20 py-2 sm:py-3 h-auto text-sm sm:text-base font-bold"
                   >
-                    <ArrowDownRight className="h-4 w-4 sm:h-5 sm:w-5 mr-1.5"/> ALDIM (-)
+                    <ArrowDownRight className="h-4 w-4 sm:h-5 sm:w-5 mr-1.5"/> Hesaptan Düş (-)
                   </Button>
                 </div>
               </div>
@@ -703,7 +703,7 @@ export const Contacts = () => {
                               <div className="relative z-10">
                                 <div className="flex items-center gap-2 mb-0.5">
                                   <p className="text-[15px] font-bold text-text-primary">
-                                    {isIncrease ? 'VERİLDİ (+)' : 'ALINDI (-)'}
+                                    {isIncrease ? 'EKLENDİ (+)' : 'DÜŞÜLDÜ (-)'}
                                   </p>
                                   {isExternal && <span className="px-1.5 py-0.5 text-[10px] font-bold bg-blue-100 text-blue-700 rounded-md">DIŞ AĞ</span>}
                                 </div>
@@ -745,7 +745,7 @@ export const Contacts = () => {
         )}
       </AnimatePresence>
 
-      <BottomSheet isOpen={isTxModalOpen} onClose={() => setIsTxModalOpen(false)} title={txActionType === 'add_debt' ? 'Manuel Borçlandır' : 'ALDIM (-)'}>
+      <BottomSheet isOpen={isTxModalOpen} onClose={() => setIsTxModalOpen(false)} title={txActionType === 'add_debt' ? 'Manuel Borçlandır' : 'Hesaptan Düş (-)'}>
         <div className="space-y-4 pt-4 pb-8">
           <div>
             <label className="block text-subhead font-medium text-text-secondary mb-1">Tutar (₺)</label>

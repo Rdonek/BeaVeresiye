@@ -83,7 +83,7 @@ BEGIN
     v_target_customer_id,
     v_tx.user_id,
     COALESCE(v_tx.cashier_name, 'Sistem') || ' (Ağ Senkronizasyonu)',
-    v_target_type,
+    v_target_type::transaction_type,
     v_tx.amount,
     v_tx.description,
     v_tx.payment_method,
