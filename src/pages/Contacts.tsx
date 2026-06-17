@@ -244,7 +244,7 @@ export const Contacts = () => {
     let balanceChange = 0;
     if (txActionType === 'add_debt') {
       balanceChange = amountNum;
-      dbType = txPaymentMethod === 'veresiye' ? 'income' : 'expense';
+      dbType = 'income';
     } else {
       balanceChange = -amountNum;
       dbType = txPaymentMethod === 'veresiye' ? 'expense' : 'income';
