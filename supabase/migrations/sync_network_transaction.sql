@@ -8,9 +8,11 @@ DECLARE
   v_link record;
   v_target_tenant_id UUID;
   v_target_customer_id UUID;
-  v_is_debt boolean;
-  v_balance_change numeric;
   v_source_tenant_id UUID;
+  v_is_debt boolean;
+  v_source_impact numeric;
+  v_balance_change numeric;
+  v_target_type text;
 BEGIN
   -- 1. Orijinal işlemi bul
   SELECT * INTO v_tx FROM transactions WHERE id = p_transaction_id;
@@ -45,14 +47,20 @@ BEGIN
     RETURN json_build_object('success', false, 'message', 'Target entity missing');
   END IF;
 
-  -- 4. Bakiye değişim yönünü hesapla (Açıklama NULL ise hata vermemesi için COALESCE eklendi)
+  -- 4. Orijinal işlemin kaynağındaki bakiye etkisini hesapla
   v_is_debt := (v_tx.payment_method = 'veresiye' OR COALESCE(v_tx.description, '') ILIKE '%Borç%' OR COALESCE(v_tx.description, '') ILIKE '%Açılış%');
   
-  IF v_is_debt THEN
-    v_balance_change := v_tx.amount;
+  IF v_tx.type = 'income' THEN
+    IF v_is_debt THEN v_source_impact := v_tx.amount; ELSE v_source_impact := -v_tx.amount; END IF;
   ELSE
-    v_balance_change := -v_tx.amount;
+    IF v_is_debt THEN v_source_impact := -v_tx.amount; ELSE v_source_impact := v_tx.amount; END IF;
   END IF;
+
+  -- Hedef taraftaki bakiye etkisi, kaynak taraftakinin tam tersi olmalıdır! (Biri alacaklanıyorsa diğeri borçlanır)
+  v_balance_change := -v_source_impact;
+
+  -- Ayrıca hedef işlemde "type" değerini tam tersine çevirmeliyiz ki arayüzde doğru (Alındı/Verildi) gözüksün.
+  IF v_tx.type = 'income' THEN v_target_type := 'expense'; ELSE v_target_type := 'income'; END IF;
 
   -- 5. İşlemi karşı tarafın defterine kopyala
   INSERT INTO transactions (
@@ -75,7 +83,7 @@ BEGIN
     v_target_customer_id,
     v_tx.user_id,
     COALESCE(v_tx.cashier_name, 'Sistem') || ' (Ağ Senkronizasyonu)',
-    v_tx.type,
+    v_target_type,
     v_tx.amount,
     v_tx.description,
     v_tx.payment_method,
