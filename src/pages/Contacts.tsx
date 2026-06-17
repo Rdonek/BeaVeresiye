@@ -231,6 +231,12 @@ export const Contacts = () => {
 
   const handleTransaction = async () => {
     if (!selectedCustomer || !txAmount || !tenantId || !user) return;
+
+    if (editingTx && (editingTx as any).network_source_tenant_id) {
+      toast.error('Bu işlem karşı işletmenin kaydı. Sadece onlar düzenleyebilir veya silebilir.');
+      return;
+    }
+
     const amountNum = parseFloat(txAmount);
     
     if (isNaN(amountNum) || amountNum <= 0) {
@@ -244,7 +250,7 @@ export const Contacts = () => {
     let balanceChange = 0;
     if (txActionType === 'add_debt') {
       balanceChange = amountNum;
-      dbType = 'income';
+      dbType = 'income'; // Manuel borçlandırma her zaman 'income'; payment_method zaten 'veresiye' olarak sabit.
     } else {
       balanceChange = -amountNum;
       dbType = txPaymentMethod === 'veresiye' ? 'expense' : 'income';
@@ -278,6 +284,17 @@ export const Contacts = () => {
         }
 
         await updateTransactionMutation.mutateAsync(txData);
+
+        if ((editingTx as any).network_link_id) {
+          try {
+            await supabase.rpc('delete_network_transaction', { p_transaction_id: editingTx.id });
+            await supabase.rpc('sync_network_transaction', { p_transaction_id: editingTx.id });
+          } catch (syncErr) {
+            console.error('Re-sync failed:', syncErr);
+            toast.error('Düzenleme kaydedildi ancak karşı tarafa iletilemedi.');
+          }
+        }
+
         setSelectedCustomer({ ...selectedCustomer, balance: newBalance });
 
       } else {
@@ -333,6 +350,10 @@ export const Contacts = () => {
 
   const handleDeleteTransaction = async () => {
     if (!editingTx || !selectedCustomer || !tenantId) return;
+    if ((editingTx as any).network_source_tenant_id) {
+      toast.error('Bu işlem karşı işletmenin kaydı. Sadece onlar silebilir.');
+      return;
+    }
     if (!window.confirm('Bu işlemi silmek istediğinize emin misiniz? Müşteri bakiyesi de buna göre güncellenecektir.')) return;
     
     try {
@@ -345,6 +366,15 @@ export const Contacts = () => {
         newBalance,
         tenantId
       });
+
+      if ((editingTx as any).network_link_id) {
+        try {
+          await supabase.rpc('delete_network_transaction', { p_transaction_id: editingTx.id });
+        } catch (syncErr) {
+          console.error('Network delete sync failed:', syncErr);
+          toast.error('İşlem silindi ancak karşı tarafa iletilemedi.');
+        }
+      }
 
       await deleteTransactionMutation.mutateAsync({
         id: editingTx.id,
@@ -693,7 +723,13 @@ export const Contacts = () => {
                           <div 
                             key={tx.id} 
                             className="relative pl-14 cursor-pointer group"
-                            onClick={() => openTxModal(isIncrease ? 'add_debt' : 'add_credit', tx)}
+                            onClick={() => {
+                              if (isExternal) {
+                                toast.error('Bu işlem karşı işletmenin kaydı. Sadece onlar düzenleyebilir veya silebilir.');
+                                return;
+                              }
+                              openTxModal(isIncrease ? 'add_debt' : 'add_credit', tx);
+                            }}
                           >
                             <div className={`absolute left-2 top-3 w-8 h-8 rounded-full border-4 border-gray-50 flex items-center justify-center z-10 transition-transform group-hover:scale-110 ${isIncrease ? 'bg-red-500 text-white shadow-sm shadow-red-200' : 'bg-green-500 text-white shadow-sm shadow-green-200'}`}>
                               {isIncrease ? <ArrowUpRight className="h-4 w-4" /> : <ArrowDownRight className="h-4 w-4" />}
