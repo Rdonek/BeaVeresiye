@@ -238,17 +238,7 @@ export const Contacts = () => {
       return;
     }
 
-    if (txActionType === 'add_credit') {
-      const currentBalance = selectedCustomer.balance ?? 0;
-      if (currentBalance <= 0) {
-        toast.error('Bu müşterinin tahsil edilecek borcu bulunmuyor.');
-        return;
-      }
-      if (amountNum > currentBalance) {
-        toast.error(`Tahsilat tutarı mevcut borçtan (${currentBalance.toLocaleString('tr-TR', { minimumFractionDigits: 2 })} ₺) fazla olamaz.`);
-        return;
-      }
-    }
+
     
     let dbType: 'income' | 'expense' = 'income';
     let balanceChange = 0;
